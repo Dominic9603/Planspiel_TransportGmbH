@@ -132,6 +132,21 @@ table.fin td.ind{padding-left:14px}
 .empty{color:var(--muted);font-size:14px}
 .warnbox{background:var(--bad-bg);color:var(--bad);font-weight:700;border-radius:10px;padding:8px 12px;font-size:13.5px}
 .codebox{font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;min-height:70px}
+.map{width:100%;max-width:560px;height:auto;display:block;margin:0 auto}
+.map .land{fill:var(--paper-2);stroke:var(--muted);stroke-width:1.2}
+.map text{font-family:var(--body);font-size:8.5px;fill:var(--text);font-weight:700}
+.map .rl{font-size:7px;fill:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.site{border:2px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);display:flex;flex-direction:column;gap:5px;text-align:left;font-weight:500;color:var(--text)}
+.site:hover{border-color:var(--accent)}
+.site .t{font-weight:800}
+.site ul{margin:0;padding-left:18px;font-size:12.5px}
+.site ul.minus{color:var(--muted)}
+.flow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) auto;gap:6px 10px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+.flow .bar{height:12px;border-radius:4px;background:var(--info)}
+.flow .bar.in{background:var(--good)}
+.flow b{text-align:right;white-space:nowrap}
+.lp{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:0 6px;background:var(--info);color:#fff;margin-right:6px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -182,7 +197,7 @@ const OD_LIMIT=15000, OD_RATE=.11, LOAN_RATE=.065;
 const LIC=['ohne','B','C1','CE'];
 const LICNAME=['kein Führerschein nötig','Führerschein B (bis 3,5 t)','Führerschein C1 (bis 7,5 t)','Führerschein C + E (Sattelzug)'];
 const WAGE=[2300,2350,2550,2850];
-const TRAIN={2:{cost:2400,from:1},3:{cost:4200,from:2}};
+const TRAIN={1:{cost:1500,from:0},2:{cost:2400,from:1},3:{cost:4200,from:2}};
 const VEH={
   rad:{name:'E-Lastenrad',icon:'rad',lic:0,buy:7500,lease:180,ins:15,maint:45,life:5,cons:1.5,fuel:'strom',capP:95,km:40,eco:true,seg:'stadt',desc:'Für enge Innenstädte. Viele Stopps, wenig Platz, kaum Energiekosten.'},
   van:{name:'Transporter Diesel 3,5 t',icon:'van',lic:1,buy:42000,lease:850,ins:180,maint:130,life:5,cons:10,fuel:'diesel',capP:140,km:90,seg:'stadt',desc:'Das Arbeitstier der Paketzustellung.'},
@@ -207,6 +222,64 @@ const CLIENTS={
 };
 const FIRST=['Lukas','Anna','David','Lea','Elias','Sophie','Jonas','Laura','Tobias','Marie','Fabian','Sarah','Emir','Jelena','Mehmet','Katarina','Florian','Hannah','Noah','Ivana','Stefan','Julia','Ali','Theresa'];
 const LAST=['Gruber','Huber','Bauer','Wagner','Pichler','Steiner','Moser','Mayer','Hofer','Leitner','Berger','Fuchs','Eder','Fischer','Schwarz','Novak','Yilmaz','Petrović','Kaya','Horvath','Winkler','Weber'];
+
+/* ================= Unterstufe: Wirtschaftsstandort Österreich ================= */
+const LVLNAME={unter:'Unterstufe',basic:'Oberstufe',adv:'Expertenmodus'};
+const PLACES={Wien:[16.37,48.21],'Wien-Liesing':[16.29,48.14],'Mödling':[16.29,48.09],Baden:[16.23,48.01],'Vösendorf':[16.33,48.12],Schwechat:[16.47,48.14],'Wiener Neudorf':[16.31,48.08],'Wiener Neustadt':[16.25,47.81],Linz:[14.29,48.31],Wels:[14.03,48.16],Steyr:[14.42,48.04],Traun:[14.24,48.22],Innsbruck:[11.40,47.27],'Kitzbühel':[12.39,47.45],Mayrhofen:[11.86,47.17],Seefeld:[11.19,47.33],'Wörgl':[12.07,47.49],Zwettl:[15.17,48.60],Krems:[15.61,48.41],'Gmünd':[14.98,48.77],Horn:[15.66,48.66]};
+const SITES={
+  wien:{name:'Wien-Liesing',place:'Wien-Liesing',type:'stadt',label:'Großstadt, Dienstleistungen',rent:3000,spot:1.25,km:.9,cands:4,startQty:3500,grant:0,season:null,segW:{stadt:5,express:3,kuehl:1,lkw:1},
+    plus:['Sehr viele Kund:innen in der Nähe','Viele Arbeitskräfte, gute Öffis','Hohe Nachfrage von Privathaushalten'],minus:['Hohe Miete für Lagerflächen','Viel Stau in der Stadt']},
+  sued:{name:'Wiener Neudorf (Logistikzentrum Süd)',place:'Wiener Neudorf',type:'logistik',label:'Logistik- und Gewerbegebiet',rent:2400,spot:1.0,km:.85,cands:3,startQty:3000,grant:0,season:null,segW:{stadt:3,express:2,kuehl:1,lkw:3},
+    plus:['Direkt an Autobahn A2 und S1','Große, günstigere Gewerbeflächen','Nah an Wien'],minus:['Viele Logistikfirmen konkurrieren um Fahrer:innen']},
+  linz:{name:'Linz',place:'Linz',type:'industrie',label:'Industrieregion',rent:2200,spot:.85,km:1,cands:3,startQty:2500,grant:0,season:null,segW:{stadt:2,express:2,kuehl:1,lkw:5},
+    plus:['Viele Industriebetriebe brauchen Transporte','Gute Verkehrsanbindung (A1, Donau, Bahn)','Fachkräfte aus der Region'],minus:['Weniger Paketkund:innen als in Wien']},
+  tirol:{name:'Innsbruck',place:'Innsbruck',type:'tourismus',label:'Tourismusregion',rent:2700,spot:.9,km:1.15,cands:3,startQty:2500,grant:0,season:'tour',segW:{stadt:2,express:2,kuehl:4,lkw:2},
+    plus:['Hotels brauchen in der Saison viele Lieferungen','Gute Preise in der Hochsaison'],minus:['Starke Schwankungen: Frühling und Herbst sind ruhig','Bergstraßen: längere Wege']},
+  wald:{name:'Zwettl (Waldviertel)',place:'Zwettl',type:'agrar',label:'Ländliche Region, Landwirtschaft',rent:1100,spot:.55,km:1.4,cands:2,startQty:2000,grant:6000,season:'agrar',segW:{stadt:2,express:1,kuehl:3,lkw:2},
+    plus:['Sehr günstige Miete','Ansiedlungsförderung der Gemeinde: 6.000 €','Kaum Konkurrenz'],minus:['Wenige Kund:innen, weite Wege','Wenige Bewerbungen, junge Menschen ziehen weg']},
+};
+const SITE_SEASON={tour:[1.4,1.45,1.2,.8,.6,.85,1.3,1.35,.85,.65,.8,1.5],agrar:[.8,.8,.9,1,1,1.05,1.1,1.25,1.3,1.2,1.05,1.1]};
+const RCLIENT={
+  stadt:{stadt:['Onlineshop Donaukiste|Wien','Modehaus Lindner|Wien','Buchhandlung Seitenwind|Wien','Tierbedarf Pfotenglück|Wien'],express:['Anwaltskanzlei Brandstätter|Wien','Labor Dr. Wiesinger|Wien','Architekturbüro Linie 5|Mödling'],kuehl:['Feinkost Rauchenberger|Wien','Bio-Restaurant Grünzeug|Wien'],lkw:['Möbelhaus Kranzl|Vösendorf','Getränke Hörmann|Schwechat']},
+  logistik:{stadt:['Onlineshop Alpenkiste|Wien','Sportversand Gipfelwerk|Mödling','Elektro Pichler Versand|Baden'],express:['Ersatzteile Haider|Wiener Neustadt','Druckerei Sonnleitner|Mödling'],kuehl:['Apotheken-Großhandel Medivita|Wiener Neudorf'],lkw:['Baumarkt Hammerl|Wiener Neustadt','Fliesen Steinwender|Baden','Spedition Danubia|Wien']},
+  industrie:{stadt:['Onlineshop Mühlviertler Kiste|Linz','Buchhandlung Donaulände|Linz'],express:['Ersatzteile Haider|Wels','Labor Dr. Kainz|Linz'],kuehl:['Molkerei Almtal|Wels'],lkw:['Stahlhandel Donauufer|Linz','Maschinenbau Steyrtal|Steyr','Kunststoffwerk Traun|Traun','Autoteile Ennstal|Steyr']},
+  tourismus:{stadt:['Sportversand Gipfelwerk|Innsbruck','Souvenirshop Edelweiß|Innsbruck'],express:['Skiverleih Pulverschnee|Kitzbühel','Bergbahnen-Ersatzteile|Mayrhofen'],kuehl:['Hotel Alpenrose|Kitzbühel','Berggasthof Gipfelblick|Mayrhofen','Wellnesshotel Bergkristall|Seefeld'],lkw:['Hotelausstatter Tiroler Stube|Innsbruck','Getränke Alpenquell|Wörgl']},
+  agrar:{stadt:['Biokiste Waldviertel|Zwettl','Hofladen Kamptal|Krems'],express:['Tierarztpraxis Dr. Haslinger|Gmünd'],kuehl:['Molkerei Waldviertler Milch|Zwettl','Bio-Fleischerei Hochland|Horn','Weingut Grüner Hügel|Krems'],lkw:['Holzhandel Waldviertel|Gmünd','Getreidehandel Kampland|Horn','Mohnmanufaktur Waldviertel|Zwettl']},
+};
+const COMP=['Gelber Blitz Paketdienst','SparPaket Express','Öko-Bote','Paket-Profi Austria'];
+const INNOV={
+  app:{name:'Routenplanungs-App',by:'eines Wiener Start-ups',cost:2500,run:150,months:1,eff:'Berechnet kürzere Wege: 10 % weniger Kilometer, Treibstoff und CO₂.'},
+  station:{name:'Paketstationen in Wohnanlagen',cost:6000,months:2,eff:'Kund:innen holen Pakete rund um die Uhr ab: 15 % mehr Nachfrage am freien Markt.'},
+  pv:{name:'Photovoltaik und Ladestation am Depot',cost:16000,grant:.3,months:2,eff:'Eigener Sonnenstrom: Strom für E-Fahrzeuge wird 60 % billiger. Der Staat fördert 30 % der Kosten.'},
+  hub:{name:'Lastenrad-Mikrodepot in der Innenstadt',cost:4000,months:1,eff:'Lastenräder starten direkt im Zentrum und schaffen 25 % mehr Pakete.'},
+  drone:{name:'Drohnen-Testprojekt',cost:9000,months:3,eff:'Wenn es klappt: Ruf +12 und Expressaufträge zahlen 10 % mehr. Innovation ist riskant, der Test kann auch scheitern.'},
+};
+const AUT=[[9.53,47.27],[9.57,47.54],[9.97,47.55],[10.23,47.39],[10.47,47.55],[10.9,47.48],[11.27,47.40],[11.64,47.59],[12.17,47.61],[12.48,47.68],[12.8,47.56],[13.03,47.71],[12.93,47.95],[12.85,48.11],[13.03,48.26],[13.41,48.37],[13.5,48.58],[13.82,48.77],[14.3,48.58],[14.7,48.6],[14.98,49.0],[15.55,48.92],[16.1,48.75],[16.55,48.8],[16.94,48.62],[17.07,48.38],[16.98,48.15],[17.16,48.0],[17.07,47.85],[17.0,47.7],[16.7,47.75],[16.45,47.7],[16.65,47.45],[16.45,47.4],[16.52,47.13],[16.4,46.99],[16.11,46.87],[15.98,46.68],[15.4,46.65],[14.9,46.6],[14.55,46.4],[14.1,46.48],[13.7,46.52],[13.2,46.57],[12.7,46.65],[12.3,46.82],[12.13,46.96],[11.7,46.98],[11.4,46.97],[11.1,46.92],[10.8,46.78],[10.47,46.86],[10.1,46.84],[9.88,46.95],[9.6,47.05]];
+const prj=([lon,lat])=>[((lon-9.4)*.674*44).toFixed(1),((49.1-lat)*44).toFixed(1)];
+const distKm=(a,b)=>{const A=PLACES[a],B=PLACES[b];if(!A||!B)return 0;return Math.round(Math.hypot((A[0]-B[0])*74,(A[1]-B[1])*111))};
+const um=()=>S&&S.lvl==='unter';
+const site=()=>SITES[S.site]||SITES.wien;
+const siteSeason=()=>site().season?SITE_SEASON[site().season][mi()]:1;
+const innovDone=k=>S.innov&&S.innov[k]&&S.innov[k].done&&S.innov[k].ok!==false;
+function austriaMap(pins){
+  const pts=AUT.map(prj).map(p=>p.join(',')).join(' ');
+  const R=[['Industrie','Linz/Steyr',14.1,48.42],['Tourismus','Tirol/Salzburg',11.0,46.98],['Landwirtschaft','Waldviertel',15.0,48.86],['Großstadt','Wien',16.4,48.34],['Tourismus','Kärnten',13.9,46.72]];
+  let g=`<svg class="map" viewBox="0 0 240 125" role="img" aria-label="Karte von Österreich"><polygon class="land" points="${pts}"/>`;
+  for(const [t,n,lo,la] of R){const [x,y]=prj([lo,la]);g+=`<text class="rl" x="${x}" y="${y}" text-anchor="middle">${t}</text>`}
+  for(const p of pins){const P=PLACES[p.place];if(!P)continue;const [x,y]=prj(P);
+    g+=p.depot?`<rect x="${x-5}" y="${y-5}" width="10" height="10" rx="2" fill="var(--accent)" stroke="var(--card)" stroke-width="1.5"/><text x="${+x+(p.dx??8)}" y="${+y+3+(p.dy||0)}" text-anchor="${p.anchor||'start'}">${esc(p.label)}</text>`
+      :`<circle cx="${x}" cy="${y}" r="3.6" fill="var(--info)" stroke="var(--card)" stroke-width="1.2"><title>${esc(p.label)}</title></circle>`}
+  return g+'</svg>';
+}
+function flowsOf(r){
+  const c=r.cost,w=c.wage+c.sonder+c.ot,sv=w*.212,flaf=w*.037,komm=w*.03,staatRest=Math.max(0,c.lnk-sv-flaf-komm),oil=(r.liters||0)*.55;
+  const out=[['Beschäftigte (private Haushalte)','Bruttolöhne',w],['Sozialversicherung','Pensionen, Kranken- und Arbeitslosenversicherung',sv],['Staat','Familienlastenausgleichsfonds, Mineralölsteuer und CO₂-Preis im Diesel, Maut, weitere Abgaben',flaf+staatRest+oil+c.maut+(r.tax||0)],['Gemeinde','Kommunalsteuer',komm],['Andere Unternehmen','Leasing, Versicherung, Werkstatt, Treibstoff, Miete, Büro, Werbung',c.lease+c.ins+c.maint+c.repair+c.fuel-oil+c.rent+c.admin+c.marketing+c.other+c.penalty+c.spesen],['Bank','Zinsen',c.interest]];
+  const inc=[['Unternehmen (Aufträge)','',r.rev.contracts],['Private Haushalte (freier Markt)','',r.rev.spot],['Staat (Förderungen)','',r.subsidy]];
+  return{out,inc,komm,flaf,sv,oil}
+}
+function flowsHtml(r){const f=flowsOf(r),mx=Math.max(1,...f.out.map(x=>x[2]),...f.inc.map(x=>x[2]));
+  const row=(x,inn)=>`<span>${x[0]}${x[1]?`<br><span class="sub" style="font-size:11.5px">${x[1]}</span>`:''}</span><span><span class="bar ${inn?'in':''}" style="display:block;width:${Math.max(1,x[2]/mx*100)}%"></span></span><b>${eur(x[2])}</b>`;
+  return`<p class="sub"><b>Einnahmen von:</b></p><div class="flow">${f.inc.filter(x=>x[2]>0).map(x=>row(x,1)).join('')}</div><p class="sub" style="margin-top:6px"><b>Ausgaben an:</b></p><div class="flow">${f.out.filter(x=>x[2]>0.5).map(x=>row(x,0)).join('')}</div>`}
 
 /* ================= Lexikon ================= */
 const TERMS={
@@ -245,6 +318,18 @@ const TERMS={
   insolvenz:['Insolvenz','Ein Unternehmen kann seine Schulden nicht mehr bezahlen. Es ist zahlungsunfähig.',''],
   ueber:['Überstunden','Arbeit über die normale Arbeitszeit hinaus. Sie wird mit einem Zuschlag von 50 % bezahlt.',''],
   vers:['Versicherung und Selbstbehalt','Die Versicherung zahlt Schäden, aber einen Teil (Selbstbehalt) zahlst du selbst.',''],
+  standort:['Standortfaktoren','Gründe, warum sich ein Unternehmen an einem bestimmten Ort ansiedelt. Harte Standortfaktoren lassen sich in Zahlen messen (Miete, Verkehrsanbindung, Nähe zu Kund:innen, Förderungen). Weiche Standortfaktoren sind schwerer messbar (Image, Lebensqualität, Freizeitangebot für Beschäftigte).','Im Spiel wählst du zu Beginn deinen Standort und kannst später umziehen.'],
+  regionen:['Wirtschaftsregionen','Regionen mit unterschiedlichen wirtschaftlichen Schwerpunkten: Industrieregionen (z. B. Linz, Steyr), Tourismusregionen (z. B. Tirol, Salzburg, Kärnten), landwirtschaftlich geprägte Regionen (z. B. Waldviertel, Weinviertel) und Großstädte mit vielen Dienstleistungen (z. B. Wien).',''],
+  oeko:['Ökosoziale Marktwirtschaft','Die Wirtschaftsordnung Österreichs: Der Markt regelt Angebot und Nachfrage, der Staat sorgt für sozialen Ausgleich (z. B. Sozialversicherung) und für Umweltschutz (z. B. CO₂-Preis, Förderungen für E-Autos).',''],
+  akteure:['Akteure der Wirtschaft','Private Haushalte, Unternehmen, Staat, Banken, die Oesterreichische Nationalbank und die Sozialpartner. Sie sind über Geld- und Güterströme miteinander verbunden (Wirtschaftskreislauf).','Im Spiel siehst du unter „Region“, wohin dein Geld fließt.'],
+  sozialpartner:['Sozialpartner','Die Interessenvertretungen der Arbeitnehmer:innen (Gewerkschaft, Arbeiterkammer) und der Arbeitgeber (Wirtschaftskammer, Landwirtschaftskammer). Sie verhandeln zum Beispiel jedes Jahr die Kollektivverträge.',''],
+  zentralbank:['Zentralbank und Leitzins','Die Europäische Zentralbank legt für den Euroraum den Leitzins fest. Die Oesterreichische Nationalbank (OeNB) ist Teil dieses Systems. Steigt der Leitzins, werden Kredite teurer und Sparen lohnt sich mehr.',''],
+  kommunal:['Kommunalsteuer','Abgabe von 3 % der Lohnsumme, die Unternehmen an die Gemeinde zahlen, in der ihre Beschäftigten arbeiten. Gemeinden bezahlen damit zum Beispiel Kindergärten, Straßen und Schulgebäude.',''],
+  flaf:['Familienlastenausgleichsfonds','Arbeitgeber zahlen einen Beitrag (Dienstgeberbeitrag) von rund 3,7 % der Lohnsumme. Daraus werden unter anderem Familienbeihilfe, Gratis-Schulbücher und die Schülerfreifahrt bezahlt.',''],
+  co2:['CO₂-Bepreisung','Auf Diesel, Benzin und Heizöl wird in Österreich ein Preis für den CO₂-Ausstoß aufgeschlagen. Das soll klimafreundliches Verhalten belohnen. Ein Liter Diesel verursacht rund 2,65 kg CO₂.',''],
+  innovation:['Innovation','Eine neue Idee, die tatsächlich umgesetzt wird: ein neues Produkt, eine neue Dienstleistung oder eine neue Arbeitsweise. Innovationen kosten zuerst Geld und sind riskant, können aber Unternehmen, Gesellschaft und Umwelt voranbringen.',''],
+  infrastruktur:['Infrastruktur','Einrichtungen, die eine Region braucht, damit Menschen und Unternehmen gut leben und arbeiten können: Straßen, Bahn, öffentlicher Verkehr, Internet, Schulen, Spitäler.',''],
+  lehre:['Lehre','Duale Ausbildung in Österreich: Lehrlinge lernen im Betrieb und in der Berufsschule. Unternehmen bekommen dafür eine Förderung.',''],
 };
 const T=(k,label)=>TERMS[k]?`<button type="button" class="term" data-term="${k}">${label||TERMS[k][0]}</button>`:(label||k);
 
@@ -259,7 +344,9 @@ function newGame(o){
      spotPrice:2.5,marketing:0,overtime:false,depotBig:false,loans:[],mods:[],oneoff:[],history:[],tasks:{},event:null,insolv:0,rentMult:1,wageIdx:1,ended:false,started:Date.now()};
   S.veh.push(mkVeh('van','lease'),mkVeh('van','lease'));
   S.drv.push(mkDriver(1),mkDriver(1));
-  S.contracts.push({id:S.nid++,client:'Onlineshop Alpenkiste',seg:'stadt',qty:3500,price:2.2,km:90,ab:0,months:6,left:6,bon:'A',from:0});
+  if(o.lvl==='unter'){S.site=o.site;S.innov={};S.rateAdj=0;S.seen={};S.rs={wages:0,komm:0,flaf:0,sv:0,oil:0,tax:0,co2:0,km:0,firms:0};
+    const st=SITES[o.site],[cl,pl]=RCLIENT[st.type].stadt[0].split('|');S.contracts.push({id:S.nid++,client:cl,place:pl,seg:'stadt',qty:st.startQty,price:2.2,km:90,ek:2*distKm(st.place,pl)*1.3,ab:0,months:6,left:6,bon:'A',from:0})}
+  else S.contracts.push({id:S.nid++,client:'Onlineshop Alpenkiste',seg:'stadt',qty:3500,price:2.2,km:90,ab:0,months:6,left:6,bon:'A',from:0});
   startMonth(true);save();
 }
 
@@ -271,23 +358,33 @@ function genOffer(seg){
   if(seg==='kuehl'){c.qty=pick([10,12,15,20]);c.price=Math.round(rnd(380,440)*f/5)*5;c.km=180;c.months=pick([3,6,12])}
   if(seg==='lkw'){c.qty=pick([10,12,15,20]);c.price=Math.round(rnd(420,520)*f/5)*5;c.km=220;c.ab=.5;c.months=pick([1,3,6])}
   if(seg==='fern'){c.qty=pick([15,18,20]);c.price=Math.round(rnd(960,1100)*f/10)*10;c.km=600;c.ab=.9;c.months=pick([1,3,6])}
+  if(um()){const st=site(),list=RCLIENT[st.type][seg]||RCLIENT[st.type].stadt,[cl,pl]=pick(list).split('|'),d=distKm(st.place,pl);c.client=cl;c.place=pl;c.dist=d;
+    if(seg==='stadt'){c.ek=Math.round(2*d*1.3);c.price=+(c.price+d*.004).toFixed(2)}else{c.km=Math.round(c.km*st.km+d*1.3);c.price=Math.round((c.price+d*1.1)/5)*5}
+    if(seg==='express'&&innovDone('drone'))c.price=Math.round(c.price*1.1/5)*5;
+    if(st.season&&(seg==='kuehl'||seg==='express'||seg==='lkw'))c.qty=Math.max(5,Math.round(c.qty*Math.min(1.3,siteSeason())))}
   if(adv()){const b=Math.random();c.bon=b<.6?'A':b<.85?'B':'C';if(c.bon==='B')c.price=+(c.price*1.04).toFixed(2);if(c.bon==='C')c.price=+(c.price*1.1).toFixed(2)}
   return c;
 }
 function startMonth(first){
   // Angebote
-  const segs=['stadt','stadt','stadt','express','express','lkw','lkw','kuehl'];if(adv())segs.push('fern','fern');
-  const n=4+(S.ruf>65?1:0)+(mi()>=10?1:0)-(S.ruf<30?1:0);
+  let segs=['stadt','stadt','stadt','express','express','lkw','lkw','kuehl'];if(adv())segs.push('fern','fern');
+  let n=4+(S.ruf>65?1:0)+(mi()>=10?1:0)-(S.ruf<30?1:0);
+  if(um()){const st=site(),ss=siteSeason();segs=[];for(const [k,w] of Object.entries(st.segW)){const ww=Math.round(w*((st.season&&k!=='stadt')?ss:1));for(let i=0;i<ww;i++)segs.push(k)}
+    n=Math.max(2,Math.round((st.type==='agrar'?3:4)*Math.min(1.4,ss)))+(S.ruf>65?1:0)-(S.ruf<30?1:0);
+    S.comp=COMP.slice(0,3).map((c,i)=>({name:c,price:+[rnd(2.6,3.1),rnd(2.0,2.35),rnd(3.0,3.5)][i].toFixed(2)}))}
   S.offers=Array.from({length:n},()=>genOffer(pick(segs)));
   // Bewerbungen
-  S.cands=Array.from({length:3},()=>{const r=Math.random(),l=r<.55?1:r<.82?2:(adv()?3:2);const d=mkDriver(l);d.wage=Math.round((WAGE[l]*S.wageIdx+ri(-60,140))/10)*10;return d});
+  const nc=um()?Math.max(1,site().cands+(S.candAdj||0)-S.mods.filter(x=>x.key==='fachkraft'&&x.until>S.m).length):3;
+  S.cands=Array.from({length:nc},()=>{const r=Math.random(),l=r<.55?1:r<.82?2:(adv()?3:2);const d=mkDriver(l);d.wage=Math.round((WAGE[l]*S.wageIdx+ri(-60,140))/10)*10;return d});
   // jährliche Anpassungen (Jänner ab Jahr 2)
   S.yearNote='';
   if(mi()===0&&S.m>0){S.wageIdx*=1.032;S.drv.forEach(d=>d.wage=Math.round(d.wage*1.032));S.rentMult*=1.03;S.yearNote='Neues Jahr: Die Löhne steigen laut Kollektivvertrag um 3,2 %, die Depotmiete wird um 3 % an die Inflation angepasst.'}
   S.mods=S.mods.filter(x=>x.until>S.m);
   S.oneoff=[];
   if(mi()===10)S.veh.filter(v=>v.type!=='rad').forEach(v=>addOne(`Winterreifen ${VEH[v.type].name}`,v.type==='van'||v.type==='evan'||v.type==='kuehl'?380:900,'maint'));
-  S.event=first?{id:'start',t:'Willkommen in deinem Unternehmen!',x:'Du übernimmst einen kleinen Paketdienst in Wien mit 2 geleasten Transportern, 2 Fahrer:innen und einem ersten Auftrag. Startkapital: 30.000 €. Schau dir alle Bereiche an, triff deine Entscheidungen und schließe dann den Monat ab.',term:'umsatz'}:drawEvent();
+  if(first&&um()&&site().grant)addOne('Ansiedlungsförderung der Gemeinde',site().grant,'subsidy');
+  if(um()&&!first&&mi()===9){S.event={id:'kv',t:'Kollektivvertrags-Verhandlungen',x:'Die Sozialpartner verhandeln die Löhne für das nächste Jahr. Die Gewerkschaft fordert wegen der Teuerung +6 %, die Wirtschaftskammer bietet +2 %, weil die Unternehmen sonst weniger verdienen. Nach mehreren Runden einigen sie sich auf +3,2 % ab Jänner.',term:'sozialpartner'};return}
+  S.event=first?(um()?{id:'start',t:`Willkommen in ${site().name}!`,x:`Du gründest deinen Paketdienst in ${site().name} (${site().label}). Du startest mit 2 geleasten Transportern, 2 Fahrer:innen, einem ersten Auftrag und 30.000 € Startkapital.${site().grant?` Die Gemeinde zahlt dir eine Ansiedlungsförderung von ${eur(site().grant)}, weil sie sich Arbeitsplätze und Kommunalsteuer erhofft.`:''} Schau dir unter „Region“ deine Standortfaktoren an.`,term:'standort'}:{id:'start',t:'Willkommen in deinem Unternehmen!',x:'Du übernimmst einen kleinen Paketdienst in Wien mit 2 geleasten Transportern, 2 Fahrer:innen und einem ersten Auftrag. Startkapital: 30.000 €. Schau dir alle Bereiche an, triff deine Entscheidungen und schließe dann den Monat ab.',term:'umsatz'}):drawEvent();
 }
 const addMod=(key,val,dur)=>S.mods.push({key,val,until:S.m+dur});
 const addOne=(label,amount,cat,cash=true)=>S.oneoff.push({label,amount,cat,cash});
@@ -309,6 +406,15 @@ function drawEvent(){
     d&&{id:'raise',w:1.2,t:'Wunsch nach Gehaltserhöhung',dId:d.id,x:`${d.name} möchte 150 € mehr Bruttolohn pro Monat. Sonst sucht sich ${d.name.split(' ')[0]} vielleicht einen anderen Job.`,term:'brutto',choice:[['Gehalt erhöhen','raise_yes'],['Ablehnen','raise_no']]},
     {id:'ad',w:1,t:'Angebot einer Werbeagentur',x:'Eine Werbekampagne kostet einmalig 2.500 € und steigert deinen Ruf um 8 Punkte.',term:'kosten',choice:[['Kampagne buchen','ad_yes'],['Nein danke','ad_no']]},
     adv()&&S.contracts.some(c=>c.bon==='C')&&{id:'default',w:2,t:'Kunde zahlt nicht',c:S.contracts.find(c=>c.bon==='C').id,x:`${S.contracts.find(c=>c.bon==='C').client} hat Zahlungsschwierigkeiten und zahlt die Leistung dieses Monats nicht.`,term:'bon',fx:function(){const c=S.contracts.find(x=>x.id===this.c);if(c)c.noPay=S.m}},
+    ...(um()?[
+    {id:'zins_up',w:1,t:'Zentralbank erhöht den Leitzins',x:'Die Europäische Zentralbank (in Österreich vertreten durch die Oesterreichische Nationalbank) erhöht den Leitzins, um die Inflation zu bremsen. Deine Bank verlangt ab jetzt 2 Prozentpunkte mehr Zinsen, wenn dein Konto im Minus ist.',term:'zentralbank',fx:()=>{S.rateAdj=Math.min(.06,(S.rateAdj||0)+.02)}},
+    (S.rateAdj||0)>0&&{id:'zins_down',w:1,t:'Zentralbank senkt den Leitzins',x:'Die Europäische Zentralbank senkt den Leitzins, damit Unternehmen leichter investieren. Überziehungszinsen werden um 2 Prozentpunkte billiger.',term:'zentralbank',fx:()=>{S.rateAdj=Math.max(0,(S.rateAdj||0)-.02)}},
+    S.veh.length>=4&&!S.seen.anr&&{id:'anr',w:3,t:'Anrainer:innen beschweren sich',x:'Menschen, die neben deinem Depot wohnen, beschweren sich über Lärm und Abgase, wenn deine Fahrzeuge um 5 Uhr früh losfahren. Du kannst eine Lärmschutzwand bauen und später abfahren (1.500 €) oder nichts tun.',term:'standort',choice:[['Lärmschutz bauen','anr_yes'],['Nichts tun','anr_no']]},
+    S.drv.length>=3&&!S.seen.lehr&&{id:'lehr',w:3,t:'Lehrstelle gesucht',x:'Die Gemeinde fragt, ob du eine Lehrstelle als Berufskraftfahrer:in anbietest. Junge Menschen könnten dann in der Region bleiben. Ein Lehrling verdient weniger, darf anfangs aber nur Lastenrad fahren. Es gibt 2.000 € Lehrlingsförderung.',term:'lehre',choice:[['Lehrling aufnehmen','lehr_yes'],['Nein danke','lehr_no']]},
+    !S.seen.bus&&S.m>=3&&{id:'bus',w:1.5,t:'Neue Buslinie zum Depot',x:'Das Land verlängert eine Buslinie bis zu deinem Gewerbegebiet. Menschen ohne Auto können jetzt leichter bei dir arbeiten: Du bekommst mehr Bewerbungen.',term:'infrastruktur',fx:()=>{S.seen.bus=1;S.candAdj=(S.candAdj||0)+1}},
+    {id:'fachkraft',w:1,t:'Fachkräftemangel',x:'Viele Berufskraftfahrer:innen gehen in Pension, zu wenige junge Menschen kommen nach. In den nächsten 2 Monaten bekommst du weniger Bewerbungen.',term:'standort',fx:()=>addMod('fachkraft',1,2)},
+    !S.seen.co2&&{id:'co2',w:1,t:'CO₂-Preis steigt',x:'Die CO₂-Bepreisung steigt. Diesel wird dauerhaft um rund 4 % teurer. E-Fahrzeuge sind davon nicht betroffen.',term:'co2',fx:()=>{S.seen.co2=1;addMod('diesel',1.04,240)}},
+    ]:[]),
   ].filter(Boolean);
   const tot=deck.reduce((a,e)=>a+e.w,0);let r=Math.random()*tot,e=deck[0];for(const x of deck){r-=x.w;if(r<=0){e=x;break}}
   if(e.fx)e.fx.call(e);
@@ -323,6 +429,10 @@ function choose(key){
   if(key==='raise_no'&&d){if(Math.random()<.5){S.drv=S.drv.filter(x=>x!==d);e.res=`${d.name} hat gekündigt und ist ab sofort weg.`}else e.res=`${d.name} bleibt, ist aber enttäuscht.`}
   if(key==='ad_yes'){addOne('Werbekampagne',2500,'marketing');S.ruf=Math.min(100,S.ruf+8);e.res='Die Kampagne läuft. Dein Ruf ist um 8 gestiegen.'}
   if(key==='ad_no')e.res='Du sparst dir die Ausgabe.';
+  if(key==='anr_yes'){S.seen.anr=1;addOne('Lärmschutzwand',1500,'other');S.ruf=Math.min(100,S.ruf+3);e.res='Die Anrainer:innen sind zufrieden. Dein Ruf steigt um 3.'}
+  if(key==='anr_no'){S.seen.anr=1;S.ruf=Math.max(0,S.ruf-6);e.res='Die Beschwerden landen in der Zeitung. Dein Ruf sinkt um 6.'}
+  if(key==='lehr_yes'){S.seen.lehr=1;const d=mkDriver(0,1100);d.name+=' (Lehrling)';d.appr=1;S.drv.push(d);addOne('Lehrlingsförderung',2000,'subsidy');S.ruf=Math.min(100,S.ruf+3);e.res=`${d.name} beginnt die Lehre. Unter „Personal“ kannst du später den Führerschein B bezahlen.`}
+  if(key==='lehr_no'){S.seen.lehr=1;e.res='Du bietest keine Lehrstelle an.'}
   save();render();
 }
 
@@ -330,41 +440,48 @@ function choose(key){
 const modv=k=>S.mods.filter(x=>x.key===k&&x.until>S.m).reduce((a,x)=>a*x.val,1);
 const breakP=v=>.03+.015*(v.age/12);
 function simulate(dry){
-  const W=WORKDAYS[mi()],dP=PRICE.diesel*modv('diesel'),kmF=modv('km');
+  const W=WORKDAYS[mi()],dP=PRICE.diesel*modv('diesel'),kmF=modv('km')*(innovDone('app')?.9:1)*(um()?site().km:1),strP=PRICE.strom*(innovDone('pv')?.4:1);
   const r={m:S.m,W,rev:{contracts:0,spot:0},cost:{wage:0,sonder:0,lnk:0,ot:0,fuel:0,maut:0,spesen:0,lease:0,ins:0,maint:0,repair:0,afa:0,rent:0,admin:0,marketing:0,interest:0,penalty:0,other:0,loss:0},fulfill:[],notes:[],spot:{},pairs:0,usedDays:0,availDays:0,purchases:0,sales:0,subsidy:0,loanIn:0};
   // Fahrzeuge verfügbar (zufällige Pannen nur im echten Abschluss)
-  const vd={};
-  for(const v of S.veh){let d=W-(v.down||0);if(!dry&&Math.random()<breakP(v)){const lost=ri(1,3),cost=ri(4,25)*100;d-=lost;r.cost.repair+=cost;r.notes.push(`Panne: ${VEH[v.type].name} stand ${lost} Tag${lost>1?'e':''} in der Werkstatt (Reparatur ${eur(cost)}).`)}vd[v.id]=Math.max(0,d)}
+  const vd={},brk={};
+  for(const v of S.veh){let d=W-(v.down||0);if(!dry&&Math.random()<breakP(v)){const lost=ri(1,3),cost=ri(4,25)*100;d-=lost;brk[v.id]=lost;r.cost.repair+=cost;r.notes.push(`Panne: ${VEH[v.type].name} stand ${lost} Tag${lost>1?'e':''} in der Werkstatt (Reparatur ${eur(cost)}).`)}vd[v.id]=Math.max(0,d)}
   // Fahrer:innen den Fahrzeugen zuteilen (höchste Führerscheinklasse zuerst)
   const free=S.drv.map(d=>({d,days:W-(d.sick||0)}));
-  const pairs=[];
+  const pairs=[],noDrv=[];
   for(const v of [...S.veh].sort((a,b)=>VEH[b.type].lic-VEH[a.type].lic)){
     const need=VEH[v.type].lic,c=free.filter(x=>x.d.lic>=need&&x.days>0).sort((a,b)=>a.d.lic-b.d.lic||b.days-a.days)[0];
-    if(!c){r.notes.push(`${VEH[v.type].name}: keine passende Fahrerin bzw. kein passender Fahrer (${LIC[need]}). Das Fahrzeug stand still.`);continue}
-    const days=Math.min(vd[v.id],c.days);c.days-=days;pairs.push({v,t:VEH[v.type],d:c.d,days,used:0,ot:0,km:0,ab:0});
+    if(!c){r.notes.push(`${VEH[v.type].name}: keine passende Fahrerin bzw. kein passender Fahrer (${LIC[need]}). Das Fahrzeug stand still.`);noDrv.push(v);continue}
+    const days=Math.min(vd[v.id],c.days);c.days-=days;pairs.push({v,t:VEH[v.type],d:c.d,days,used:0,ot:0,km:0,ab:0,cap:(VEH[v.type].capP||0)*(v.type==='rad'&&innovDone('hub')?1.25:1)});
   }
   r.pairs=pairs.length;r.availDays=pairs.reduce((a,p)=>a+p.days,0);
   const idle=free.filter(x=>!pairs.some(p=>p.d===x.d));if(idle.length)r.notes.push(`${idle.length} Fahrer:in${idle.length>1?'nen':''} ohne Fahrzeug: Lohn läuft trotzdem.`);
   const otMax=S.overtime?3:0;
   const takeDays=(types,need,kmDay,ab)=>{let got=0;for(const pass of [0,1])for(const ty of types)for(const p of pairs){if(p.v.type!==ty)continue;const room=pass?otMax-p.ot:p.days-p.used;if(room<=0||got>=need)continue;const x=Math.min(room,need-got);if(pass)p.ot+=x;else p.used+=x;p.km+=x*kmDay*kmF;p.ab+=x*kmDay*kmF*ab;got+=x}return got};
-  const takePak=(need,allowOt)=>{let got=0;for(const pass of allowOt?[0,1]:[0])for(const ty of SEG.stadt.veh)for(const p of pairs){if(p.v.type!==ty)continue;const room=(pass?otMax-p.ot:p.days-p.used)*p.t.capP;if(room<=0||got>=need)continue;const x=Math.min(room,need-got),dd=x/p.t.capP;if(pass)p.ot+=dd;else p.used+=dd;p.km+=dd*p.t.km*kmF;got+=x}return got};
+  const takePak=(need,allowOt,ek=0)=>{let got=0;for(const pass of allowOt?[0,1]:[0])for(const ty of SEG.stadt.veh)for(const p of pairs){if(p.v.type!==ty)continue;const room=(pass?otMax-p.ot:p.days-p.used)*p.cap;if(room<=0||got>=need)continue;const x=Math.min(room,need-got),dd=x/p.cap;if(pass)p.ot+=dd;else p.used+=dd;p.km+=dd*(p.t.km+ek)*kmF;got+=x}return got};
+  let ord=0;
   for(const c of S.contracts){
-    const done=c.seg==='stadt'?takePak(c.qty,true):takeDays(SEG[c.seg].veh,c.qty,c.km,c.ab);
+    const types=SEG[c.seg].veh,ps=pairs.filter(p=>types.includes(p.v.type)),isP=c.seg==='stadt',u=p=>isP?p.cap:1;
+    const snap={ord:++ord,price:c.price,full:ps.reduce((a,p)=>a+p.days*u(p),0),reg:ps.reduce((a,p)=>a+Math.max(0,p.days-p.used)*u(p),0),otR:ps.reduce((a,p)=>a+Math.max(0,otMax-p.ot)*u(p),0),otIf:ps.reduce((a,p)=>a+3*u(p),0),lost:ps.reduce((a,p)=>a+(W-p.days)*u(p),0),fleet:S.veh.filter(v=>types.includes(v.type)).length,np:ps.length,ot:!!otMax};
+    const done=c.seg==='stadt'?takePak(c.qty,true,c.ek||0):takeDays(SEG[c.seg].veh,c.qty,c.km,c.ab);
     const val=done*c.price,miss=(c.qty-done)*c.price,pen=miss*.3,paid=c.noPay===S.m?0:val;
     if(c.noPay===S.m)r.notes.push(`${c.client} hat nicht bezahlt: ${eur(val)} Forderungsausfall.`);
-    r.rev.contracts+=paid;r.cost.penalty+=pen;r.fulfill.push({id:c.id,client:c.client,seg:c.seg,need:c.qty,done,val:paid,pen,unit:SEG[c.seg].unit});
+    r.rev.contracts+=paid;r.cost.penalty+=pen;r.fulfill.push({id:c.id,client:c.client,seg:c.seg,need:c.qty,done,val:paid,pen,unit:SEG[c.seg].unit,...snap,noPay:c.noPay===S.m});
     if(c.seg==='fern')r.cost.spesen+=done*45;
   }
   const freeD=types=>pairs.filter(p=>types.includes(p.v.type)).reduce((a,p)=>a+Math.max(0,p.days-p.used),0);
-  r.free={stadt:Math.floor(pairs.filter(p=>SEG.stadt.veh.includes(p.v.type)).reduce((a,p)=>a+Math.max(0,p.days-p.used)*p.t.capP,0)),express:Math.floor(freeD(SEG.express.veh)),kuehl:Math.floor(freeD(['kuehl'])),lkw:Math.floor(freeD(['lkw'])),fern:Math.floor(freeD(['sattel']))};
+  r.free={stadt:Math.floor(pairs.filter(p=>SEG.stadt.veh.includes(p.v.type)).reduce((a,p)=>a+Math.max(0,p.days-p.used)*p.cap,0)),express:Math.floor(freeD(SEG.express.veh)),kuehl:Math.floor(freeD(['kuehl'])),lkw:Math.floor(freeD(['lkw'])),fern:Math.floor(freeD(['sattel']))};
   // freier Markt (Laufkundschaft)
-  const cap=pairs.filter(p=>SEG.stadt.veh.includes(p.v.type)).reduce((a,p)=>a+(p.days-p.used)*p.t.capP,0);
+  const cap=pairs.filter(p=>SEG.stadt.veh.includes(p.v.type)).reduce((a,p)=>a+(p.days-p.used)*p.cap,0);
   const mk=1+.3*(1-Math.exp(-S.marketing/1500));
-  const demand=Math.round(2400*SEASON_SPOT[mi()]*modv('spot')*(.55+S.ruf/110)*Math.pow(2.5/S.spotPrice,1.8)*mk);
+  const demand=Math.round(2400*(um()?(site().season?siteSeason():SEASON_SPOT[mi()])*site().spot*(innovDone('station')?1.15:1):SEASON_SPOT[mi()])*modv('spot')*(.55+S.ruf/110)*Math.pow(2.5/S.spotPrice,1.8)*mk);
   const served=Math.floor(takePak(Math.min(demand,cap),false));
   r.spot={price:S.spotPrice,demand,served,cap:Math.round(cap)};r.rev.spot=served*S.spotPrice;
+  const fixC=v=>{const t=VEH[v.type];return(v.own==='lease'?t.lease:t.buy/(t.life*12))+t.ins*modv('ins')+t.maint};
+  r.vd=[...pairs.map(p=>({n:p.t.name,d:p.d.name,W,days:p.days,brk:brk[p.v.id]||0,down:p.v.down||0,sick:p.d.sick||0,used:+p.used.toFixed(1),ot:+p.ot.toFixed(1),km:Math.round(p.km),fix:Math.round(fixC(p.v)),cap:p.cap})),...noDrv.map(v=>({n:VEH[v.type].name,d:null,lic:VEH[v.type].lic,W,days:0,used:0,ot:0,km:0,fix:Math.round(fixC(v))}))];
+  r.idleDrv=S.drv.filter(d=>!pairs.some(p=>p.d===d)).map(d=>({n:d.name,lic:d.lic,w:d.wage}));
+  r.oneoffs=S.oneoff.map(o=>[o.label,o.amount,o.cat]);r.odRate=OD_RATE+(S.rateAdj||0);
   // Fahrzeugkosten
-  for(const p of pairs){const e=p.t.fuel==='diesel'?dP:PRICE.strom;r.cost.fuel+=p.km*p.t.cons/100*e;r.cost.maut+=p.ab*(p.t.maut||0);r.usedDays+=p.used}
+  r.liters=0;r.km=0;for(const p of pairs){const e=p.t.fuel==='diesel'?dP:strP;r.cost.fuel+=p.km*p.t.cons/100*e;r.km+=p.km;if(p.t.fuel==='diesel')r.liters+=p.km*p.t.cons/100;r.cost.maut+=p.ab*(p.t.maut||0);r.usedDays+=p.used}
   for(const v of S.veh){const t=VEH[v.type];if(v.own==='lease')r.cost.lease+=t.lease;else r.cost.afa+=t.buy/(t.life*12);r.cost.ins+=t.ins*modv('ins');r.cost.maint+=t.maint}
   // Personal
   const sonder=mi()===5||mi()===10;
@@ -374,8 +491,8 @@ function simulate(dry){
   if(otDays>0)r.notes.push(`Überstunden: ${num(otDays)} zusätzliche Einsatztage.`);
   r.cost.lnk=(r.cost.wage+r.cost.sonder+r.cost.ot)*LNK;
   // Gemeinkosten
-  r.cost.rent=(S.depotBig?4200:2400)*S.rentMult;r.cost.admin=650;r.cost.marketing=S.marketing;
-  const loanDebt=S.loans.reduce((a,l)=>a+l.left,0);r.cost.interest=loanDebt*LOAN_RATE/12+(S.cash<0?-S.cash*OD_RATE/12:0);
+  r.cost.rent=(um()?site().rent*(S.depotBig?1.75:1):(S.depotBig?4200:2400))*S.rentMult;if(um()&&S.innov&&S.innov.app)r.cost.other+=INNOV.app.run;r.cost.admin=650;r.cost.marketing=S.marketing;
+  const loanDebt=S.loans.reduce((a,l)=>a+l.left,0);r.cost.interest=loanDebt*LOAN_RATE/12+(S.cash<0?-S.cash*(OD_RATE+(S.rateAdj||0))/12:0);
   for(const o of S.oneoff){if(o.cat==='purchase')r.purchases+=o.amount;else if(o.cat==='sale')r.sales+=o.amount;else if(o.cat==='subsidy')r.subsidy+=o.amount;else if(o.cat==='loanIn')r.loanIn+=o.amount;else if(o.cat==='tilg'){}else r.cost[r.cost[o.cat]!=null?o.cat:'other']+=o.amount}
   r.tilg=S.loans.reduce((a,l)=>a+Math.min(l.left,l.rate),0)+S.oneoff.filter(o=>o.cat==='tilg').reduce((a,o)=>a+o.amount,0);
   // Summen
@@ -399,6 +516,10 @@ function closeMonth(){
   const fr=r.fulfill.length?r.fulfill.reduce((a,f)=>a+f.done/f.need,0)/r.fulfill.length:1;
   const eco=S.veh.length?S.veh.filter(v=>VEH[v.type].eco).length/S.veh.length:0;
   const ruf0=S.ruf;
+  r.rufParts=[fr>=.999?['Alle Aufträge vollständig erfüllt',2]:[`Aufträge im Schnitt nur zu ${pct(fr)} erfüllt`,-(1-fr)*25]];
+  if(S.marketing>0)r.rufParts.push([`Werbebudget ${eur(S.marketing)}`,Math.min(3,S.marketing/800)]);
+  if(eco>=.3)r.rufParts.push(['Umweltfreundliche Flotte (mind. 30 % emissionsfrei)',1]);
+  if(S.spotPrice>3.2)r.rufParts.push(['Paketpreis über 3,20 € wirkt teuer',-1]);
   S.ruf+=fr>=.999?2:-(1-fr)*25;S.ruf+=Math.min(3,S.marketing/800);if(eco>=.3)S.ruf+=1;if(S.spotPrice>3.2)S.ruf-=1;
   S.ruf=Math.max(0,Math.min(100,Math.round(S.ruf)));r.ruf0=ruf0;r.ruf=S.ruf;r.fr=fr;
   // Kasse
@@ -417,9 +538,11 @@ function closeMonth(){
   r.tax=0;
   if(mi()===11){const yp=S.history.filter(h=>Math.floor(h.m/12)===Math.floor(S.m/12)).reduce((a,h)=>a+h.profit,0)+r.profit;r.yearProfit=yp;if(yp>0){r.tax=Math.round(yp*KOEST);S.cash-=r.tax;r.cash=S.cash}}
   // Insolvenz
-  if(S.cash<-OD_LIMIT){S.insolv++;r.notes.push(S.insolv>=3?'Das Konto ist zum dritten Mal hintereinander unter dem Überziehungsrahmen. Die Bank kündigt alle Kredite.':`Achtung (${S.insolv}. Mahnung): Dein Konto liegt unter −${num(OD_LIMIT)} €. Liegt es drei Monate hintereinander darunter, ist dein Unternehmen zahlungsunfähig. Verbessere jetzt deine ${T('liq','Liquidität')}: weniger Kosten, mehr Aufträge${adv()?', Kredit oder Fahrzeug verkaufen':', Fahrzeuge zurückgeben'}.`)}else S.insolv=0;
-  r.yearNote=S.yearNote||'';r.event={t:S.event&&S.event.t,res:S.event&&S.event.res};
-  r.task=pickTask(r);S.tasks[S.m]={q:r.task,a:''};
+  r.insolv0=S.insolv;if(S.cash<-OD_LIMIT){S.insolv++;r.notes.push(S.insolv>=3?'Das Konto ist zum dritten Mal hintereinander unter dem Überziehungsrahmen. Die Bank kündigt alle Kredite.':`Achtung (${S.insolv}. Mahnung): Dein Konto liegt unter −${num(OD_LIMIT)} €. Liegt es drei Monate hintereinander darunter, ist dein Unternehmen zahlungsunfähig. Verbessere jetzt deine ${T('liq','Liquidität')}: weniger Kosten, mehr Aufträge${adv()?', Kredit oder Fahrzeug verkaufen':', Fahrzeuge zurückgeben'}.`)}else S.insolv=0;
+  r.yearNote=S.yearNote||'';r.event={t:S.event&&S.event.t,res:S.event&&S.event.res,id:S.event&&S.event.id};
+  if(um()){const f=flowsOf(r),w=r.cost.wage+r.cost.sonder+r.cost.ot;Object.assign(S.rs,{wages:S.rs.wages+w,komm:S.rs.komm+f.komm,flaf:S.rs.flaf+f.flaf,sv:S.rs.sv+f.sv,oil:S.rs.oil+f.oil,tax:S.rs.tax+(r.tax||0),co2:S.rs.co2+(r.liters||0)*2.65,km:S.rs.km+(r.km||0)});
+    for(const [k,iv] of Object.entries(S.innov)){if(iv.done)continue;if(S.m-iv.start+1>=INNOV[k].months){iv.done=true;if(k==='drone'){iv.ok=Math.random()<.5;if(iv.ok)S.ruf=Math.min(100,S.ruf+12)}r.notes.push(k==='drone'?(iv.ok?'Innovation: Das Drohnen-Testprojekt war erfolgreich! Ruf +12, Expressaufträge zahlen mehr.':'Innovation: Das Drohnen-Testprojekt ist gescheitert. Die Technik war noch nicht so weit. Auch das gehört zu Innovation.'):`Innovation fertig: ${INNOV[k].name}. ${INNOV[k].eff}`);r.innovDone=k}}}
+  const tk=pickTask(r);r.task=tk.q||tk;r.lp=tk.lp||'';S.tasks[S.m]={q:r.task,a:'',lp:r.lp};
   S.history.push(r);lastReport=r;
   const isYearEnd=mi()===11,bust=S.insolv>=3;
   S.m++;
@@ -427,7 +550,31 @@ function closeMonth(){
   else startMonth(false);
   save();render();showReport(r,isYearEnd,bust);
 }
+function pickTaskUnter(r){
+  const m=r.m,prev=S.history[S.history.length-1],st=site(),L=[];
+  const P=(lp,q)=>L.push({lp,q});
+  if(m===0)P('3.5',`Warum hast du dich für den Standort ${st.name} entschieden? Nenne zwei Standortfaktoren, die für dich wichtig waren, und einen Nachteil.`);
+  if(r.event&&(r.event.id==='anr'||r.event.id==='lehr'||r.event.id==='bus'))P('3.7','Welche Folgen hat die Ansiedlung deines Unternehmens für die Gemeinde? Nenne eine positive und eine negative Folge für die Menschen dort.');
+  if(r.event&&(r.event.id==='zins_up'||r.event.id==='zins_down'))P('3.9','Die Zentralbank hat den Leitzins geändert. Wie wirkt sich das auf Unternehmen und auf private Haushalte aus?');
+  if(r.event&&r.event.id==='kv')P('3.9','Gewerkschaft und Wirtschaftskammer wollten unterschiedliche Lohnerhöhungen. Erkläre beide Sichtweisen. Warum ist eine Einigung für beide Seiten wichtig?');
+  if(r.innovDone)P('3.12',`Du hast die Innovation „${INNOV[r.innovDone].name}“ umgesetzt. Wem nützt sie: deinem Unternehmen, den Kund:innen, der Umwelt? Begründe.`);
+  if(m===5||m===10)P('3.10','Diesen Monat waren die Lohnkosten fast doppelt so hoch (13. bzw. 14. Gehalt). Schau unter „Region“ nach: Wie viel Kommunalsteuer und Familienlastenausgleich hast du bezahlt? Was davon nützt dir als Schüler:in?');
+  if(st.season==='tour'&&(m%12===3||m%12===9))P('3.6','Deine Region ist eine Tourismusregion. Vergleiche die Zahl deiner Aufträge in der Hochsaison und jetzt. Erkläre den Unterschied.');
+  if(prev&&Math.abs(prev.spot.price-r.spot.price)>.05)P('3.8',`Du hast deinen Paketpreis von ${eurC(prev.spot.price)} auf ${eurC(r.spot.price)} geändert. Wie haben Nachfrage und Umsatz reagiert? Erkläre mit Angebot und Nachfrage.`);
+  if(r.profit<0)P('3.8','Dein Unternehmen hat Verlust gemacht. Vergleiche deinen Paketpreis mit deinen Kosten pro Paket (unter „Aufträge“). Warum kannst du auf Dauer nicht billiger verkaufen, als es dich kostet?');
+  if(r.cash<0)P('3.9','Dein Konto ist im Minus und du zahlst der Bank Zinsen. Welche Rolle spielen Banken in der Wirtschaft?');
+  if(m===2||m===8)P('3.6','Schau dir unter „Region“ die Karte an. Ordne deine Kund:innen zu: Welche gehören zu Industrie, Tourismus, Landwirtschaft oder Dienstleistung?');
+  if(m===4)P('3.12','Welche Innovation könnte die Paketzustellung in den nächsten zehn Jahren verändern? Beschreibe eine Idee und ihre Folgen für Gesellschaft und Umwelt.');
+  if(m===6||m===11)P('3.11','Was braucht ein Unternehmen wie deines von Österreich als Wirtschaftsstandort? Nenne drei Rahmenbedingungen (z. B. Straßen, Fachkräfte, Gesetze).');
+  if(r.tax>0)P('3.10',`Du zahlst ${eur(r.tax)} Körperschaftsteuer. Wofür verwendet der Staat Steuern? Nenne drei Beispiele aus deinem Alltag.`);
+  P('3.9','Schau unter „Region“, wohin dein Geld geflossen ist. Welche Akteure der Wirtschaft haben von deinem Unternehmen Geld bekommen, und wofür?');
+  P('3.7',`Dein Unternehmen ist ${S.rs.km>0?`schon ${num(S.rs.km)} km gefahren und hat rund ${num(S.rs.co2/1000)} t CO₂ ausgestoßen`:'unterwegs'}. Welche ökologischen Folgen hat ein Paketdienst? Wie könntest du sie verringern?`);
+  P('3.11','Wie viele Arbeitsplätze hast du geschaffen und wie viel Lohn hast du bisher bezahlt? Warum sind Unternehmen wichtig für eine Region?');
+  const recent=Object.values(S.tasks).slice(-4).map(t=>t.q);
+  return L.find(x=>!recent.includes(x.q))||L[L.length-1];
+}
 function pickTask(r){
+  if(um())return pickTaskUnter(r);
   const m=r.m%12,prev=S.history[S.history.length-1];
   const L=[];
   if(m===5||m===10)L.push('Warum sind die Lohnkosten diesen Monat fast doppelt so hoch wie sonst? Erkläre den Begriff 13. bzw. 14. Gehalt.');
@@ -449,13 +596,15 @@ const TABS=[['over','Übersicht'],['orders','Aufträge'],['fleet','Fuhrpark'],['
 function setTab(t){tab=t;render();window.scrollTo({top:0,behavior:'smooth'})}
 function render(){
   if(!S)return;
-  $('firm').textContent=`${S.firma} · ${S.name}${S.klasse?' · '+S.klasse:''} · ${adv()?'Fortgeschritten':'Einsteiger'}`;
+  $('firm').textContent=`${S.firma} · ${S.name}${S.klasse?' · '+S.klasse:''} · ${LVLNAME[S.lvl]||S.lvl}`;
   $('pMonth').innerHTML=`<small>Monat</small>${S.ended==='insolvent'?'Ende':monthName()}`;
   $('pCash').innerHTML=`<small>Konto</small>${eur(S.cash)}`;$('pCash').classList.toggle('neg',S.cash<0);
   $('pRuf').innerHTML=`<small>Ruf</small>${S.ruf} / 100`;
   const pend=S.event&&S.event.choice&&!S.event.chosen?1:0;
-  $('tabs').innerHTML=TABS.map(([k,l])=>`<button role="tab" type="button" data-tab="${k}" aria-selected="${tab===k}">${l}${k==='over'&&pend?'<span class="badge">!</span>':''}${k==='orders'&&S.offers.length?`<span class="badge">${S.offers.length}</span>`:''}</button>`).join('');
-  $('view').innerHTML={over:vOver,orders:vOrders,fleet:vFleet,staff:vStaff,fin:vFin}[tab]();
+  const tabs=um()?[...TABS.slice(0,4),['region','Region'],TABS[4]]:TABS;
+  $('tabs').innerHTML=tabs.map(([k,l])=>`<button role="tab" type="button" data-tab="${k}" aria-selected="${tab===k}">${l}${k==='over'&&pend?'<span class="badge">!</span>':''}${k==='orders'&&S.offers.length?`<span class="badge">${S.offers.length}</span>`:''}</button>`).join('');
+  if(tab==='region'&&!um())tab='over';
+  $('view').innerHTML={over:vOver,orders:vOrders,fleet:vFleet,staff:vStaff,fin:vFin,region:vRegion}[tab]();
   renderPreview();
 }
 function renderPreview(){
@@ -471,7 +620,7 @@ function vOver(){
   const yn=S.yearNote?`<div class="event" style="border-color:var(--info);background:var(--info-bg)"><div class="k">Neues Geschäftsjahr</div><p>${esc(S.yearNote)}</p></div>`:'';
   const tiles=`<div class="tiles">
     <div class="tile"><div class="l">Kontostand</div><div class="v ${S.cash<0?'neg':''}">${eur(S.cash)}</div><div class="d">Start: ${eur(START_CAPITAL)}</div></div>
-    <div class="tile"><div class="l">Ergebnis Vormonat</div><div class="v ${last&&last.profit<0?'neg':last?'pos':''}">${last?eur(last.profit):'–'}</div><div class="d">${last?`Umsatz ${eur(last.revTotal)}`:'Noch kein Monat abgeschlossen'}</div></div>
+    <div class="tile"><div class="l">Ergebnis Vormonat</div><div class="v ${last&&last.profit<0?'neg':last?'pos':''}">${last?eur(last.profit):'–'}</div><div class="d">${last?`Umsatz ${eur(last.revTotal)} · <button class="linkbtn" data-act2="ana" data-m="${last.m}" type="button">Analyse</button>`:'Noch kein Monat abgeschlossen'}</div></div>
     <div class="tile"><div class="l">${T('ausl','Auslastung')}</div><div class="v">${last?pct(last.util):'–'}</div><div class="d">${S.veh.length} Fahrzeuge · ${S.drv.length} Fahrer:innen</div></div>
     <div class="tile"><div class="l">Ruf</div><div class="v">${S.ruf}</div><div class="d">Bessere Angebote ab 65</div></div>
     ${adv()&&last?`<div class="tile"><div class="l">${T('ur','Umsatzrendite')}</div><div class="v">${last.revTotal?pct(last.profit/last.revTotal):'–'}</div><div class="d">Vormonat</div></div>`:''}
@@ -479,7 +628,7 @@ function vOver(){
   const charts=h.length?`<div class="cols"><div class="panel"><h2>Ergebnis je Monat <small>Gewinn oder Verlust</small></h2>${barChart(h.map(x=>x.profit),h.map(x=>MONTHS[x.m%12].slice(0,3)))}<div class="legend"><span><i style="background:var(--good)"></i>Gewinn</span><span><i style="background:var(--bad)"></i>Verlust</span></div></div>
     <div class="panel"><h2>Kontostand <small>am Monatsende</small></h2>${lineChart([START_CAPITAL,...h.map(x=>x.cash)],['Start',...h.map(x=>MONTHS[x.m%12].slice(0,3))])}</div></div>`:'';
   const openAll=Object.entries(S.tasks).filter(([k,t])=>!t.a),open=openAll.slice(-3);
-  const tasks=open.length?`<div class="task"><b>Offene Arbeitsaufträge (${openAll.length})</b>${openAll.length>3?`<p class="sub">Hier stehen die 3 neuesten. Ältere findest du im Abschlussbericht unter „Speichern“.</p>`:''}${open.map(([k,t])=>`<div><p class="sub">${monthName(+k)}</p><p>${esc(t.q)}</p><textarea data-answer="${k}" placeholder="Deine Antwort"></textarea></div>`).join('')}<div class="actions"><button class="small primary" data-act="saveAnswers" type="button">Antworten speichern</button></div></div>`:'';
+  const tasks=open.length?`<div class="task"><b>Offene Arbeitsaufträge (${openAll.length})</b>${openAll.length>3?`<p class="sub">Hier stehen die 3 neuesten. Ältere findest du im Abschlussbericht unter „Speichern“.</p>`:''}${open.map(([k,t])=>`<div><p class="sub">${t.lp?`<span class="lp">Lehrplan ${t.lp}</span>`:''}${monthName(+k)}</p><p>${esc(t.q)}</p><textarea data-answer="${k}" placeholder="Deine Antwort"></textarea></div>`).join('')}<div class="actions"><button class="small primary" data-act="saveAnswers" type="button">Antworten speichern</button></div></div>`:'';
   const guide=!h.length?`<div class="panel"><h2>So geht's</h2><p>1. Lies die Ereigniskarte. 2. Nimm unter <b>Aufträge</b> passende Angebote an und setze deinen Preis für den freien Markt. 3. Prüfe unter <b>Fuhrpark</b> und <b>Personal</b>, ob du genug Fahrzeuge und Fahrer:innen mit dem richtigen Führerschein hast. 4. Unten siehst du eine Vorschau auf das Ergebnis. 5. Schließe den Monat ab und lies deinen Monatsbericht.</p><p class="sub">Alle Zahlen sind vereinfacht und an österreichische Werte angelehnt. Alle Preise sind netto, also ohne ${T('ust','Umsatzsteuer')}.</p></div>`:'';
   return ev+yn+tiles+tasks+guide+charts;
 }
@@ -519,7 +668,24 @@ function vOrders(){
     <div class="range"><input type="range" id="spotPrice" min="1.5" max="4.5" step="0.05" value="${S.spotPrice}"><output id="spotOut">${eurC(S.spotPrice)}</output></div>
     <label class="f" for="mkt">Werbebudget pro Monat</label>
     <div class="range"><input type="range" id="mkt" min="0" max="4000" step="100" value="${S.marketing}"><output id="mktOut">${eur(S.marketing)}</output></div>
-    <div class="tiles" id="spotTiles">${spotTiles(r)}</div></div>`;
+    <div class="tiles" id="spotTiles">${spotTiles(r)}</div>${um()?priceCompare():''}</div>`;
+}
+function priceCompare(){
+  const last=S.history[S.history.length-1],pak=last?last.fulfill.filter(f=>f.seg==='stadt').reduce((a,f)=>a+f.done,0)+last.spot.served:0;
+  const unit=last&&pak>0?last.costTotal/pak:null;
+  const mk=1+.3*(1-Math.exp(-S.marketing/1500)),base=2400*(site().season?siteSeason():SEASON_SPOT[mi()])*site().spot*(innovDone('station')?1.15:1)*modv('spot')*(.55+S.ruf/110)*mk;
+  const P=[];for(let p=1.5;p<=4.501;p+=.25)P.push([p,base*Math.pow(2.5/p,1.8)]);
+  const W=300,H=150,L=44,B=24,T0=8,mx=Math.max(...P.map(x=>x[1])),xs=p=>L+(p-1.5)/3*(W-L-8),ys=d=>T0+(1-d/mx)*(H-T0-B);
+  let g=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Nachfragekurve"><line x1="${L}" x2="${W-8}" y1="${H-B}" y2="${H-B}" stroke="var(--line)"/>`;
+  for(const p of [1.5,2.5,3.5,4.5])g+=`<text x="${xs(p)}" y="${H-8}" text-anchor="middle">${eurC(p)}</text>`;
+  g+=`<text x="${L-6}" y="${ys(mx)+4}" text-anchor="end">${num(mx)}</text><text x="${L-6}" y="${H-B}" text-anchor="end">0</text>`;
+  g+=`<polyline fill="none" stroke="var(--info)" stroke-width="2" points="${P.map(([p,d])=>`${xs(p)},${ys(d)}`).join(' ')}"/>`;
+  const cd=base*Math.pow(2.5/S.spotPrice,1.8);g+=`<circle cx="${xs(S.spotPrice)}" cy="${ys(Math.min(mx,cd))}" r="5" fill="var(--accent)" stroke="var(--card)" stroke-width="2" data-tip="Dein Preis ${eurC(S.spotPrice)}: ${num(cd)} Pakete"/>`;
+  for(const c of S.comp||[])g+=`<line x1="${xs(c.price)}" x2="${xs(c.price)}" y1="${T0}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="3 3"/>`;
+  g+='</svg>';
+  return`<div class="cols" id="pcmp" style="margin-top:6px"><div><p><b>${T('nachfrage','Preise vergleichen')}</b></p><table class="fin">${(S.comp||[]).map(c=>`<tr><td>${c.name}</td><td>${eurC(c.price)}</td></tr>`).join('')}<tr class="sum"><td>Dein Preis</td><td>${eurC(S.spotPrice)}</td></tr></table>
+    <p class="sub" style="margin-top:6px">${unit!=null?`Deine Kosten pro Paket im Vormonat (grob: alle Kosten ÷ alle Pakete): <b>${eurC(unit)}</b>. Liegt dein Preis darunter, verlierst du an jedem Paket Geld.`:'Nach dem ersten Monat siehst du hier deine Kosten pro Paket.'}</p></div>
+    <div><p><b>Nachfragekurve</b> <span class="sub">je billiger, desto mehr Pakete</span></p>${g}<p class="sub">Punkt: dein Preis. Gestrichelt: Preise der Mitbewerber.</p></div></div>`;
 }
 const spotTiles=r=>`<div class="tile"><div class="l">Nachfrage</div><div class="v">${num(r.spot.demand)}</div><div class="d">Pakete bei diesem Preis</div></div>
   <div class="tile"><div class="l">Freie Kapazität</div><div class="v">${num(r.spot.cap)}</div><div class="d">Pakete nach deinen Verträgen</div></div>
@@ -613,6 +779,33 @@ function vFin(){
   return kpi+guv+bil+loan;
 }
 
+function vRegion(){
+  const st=site(),last=S.history[S.history.length-1];
+  const pins=[{place:st.place,label:st.name,depot:1},...S.contracts.filter(c=>c.place).map(c=>({place:c.place,label:`${c.client} (${c.place})`})),...S.offers.filter(c=>c.place).map(c=>({place:c.place,label:`Angebot: ${c.client} (${c.place})`}))];
+  const sitesHtml=Object.entries(SITES).filter(([k])=>k!==S.site).map(([k,x])=>`<button class="site" data-move="${k}" type="button"><span class="t">${x.name}</span><span class="chip">${x.label}</span><span class="sub">Miete ${eur(x.rent)} / Monat</span><span class="sub">Umzug: 6.000 €</span></button>`).join('');
+  const rs=S.rs;
+  const innov=Object.entries(INNOV).map(([k,v])=>{const iv=S.innov[k];const cost=v.cost*(1-(v.grant||0));
+    return`<div class="item"><div class="t">${v.name}</div>${v.by?`<div class="s">${v.by}</div>`:''}<div class="s">${v.eff}</div>
+      <div class="kv"><span>Kosten</span><b>${eur(cost)}${v.grant?` (nach ${Math.round(v.grant*100)} % Förderung)`:''}${v.run?` + ${eur(v.run)} / Monat`:''}</b></div><div class="kv"><span>Dauer</span><b>${v.months} Monat${v.months>1?'e':''}</b></div>
+      ${iv?(iv.done?`<span class="chip ${iv.ok===false?'bad':'good'}">${iv.ok===false?'gescheitert':'umgesetzt'}</span>`:`<span class="chip gold">in Arbeit, fertig nach ${monthName(iv.start+v.months-1)}</span>`):`<div class="actions"><button class="small primary" data-innov="${k}" type="button">Projekt starten</button></div>`}</div>`}).join('');
+  return`<div class="panel"><h2>Dein Standort: ${st.name} <small>${st.label}</small></h2>
+    <div class="cols"><div>${austriaMap(pins)}<p class="sub">Quadrat: dein Depot. Punkte: deine Kund:innen und Angebote. ${T('regionen','Wirtschaftsregionen')} sind beschriftet.</p></div>
+    <div><p><b>${T('standort','Standortfaktoren')}: Vorteile</b></p><ul>${st.plus.map(x=>`<li>${x}</li>`).join('')}</ul><p style="margin-top:6px"><b>Nachteile</b></p><ul class="minus">${st.minus.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <div class="kv" style="margin-top:8px"><span>Depotmiete</span><b>${eur(st.rent*(S.depotBig?1.75:1)*S.rentMult)} / Monat</b></div></div></div></div>
+  <div class="panel"><h2>Dein Beitrag für die Region <small>seit dem Start</small></h2><div class="tiles">
+    <div class="tile"><div class="l">Arbeitsplätze</div><div class="v">${S.drv.length}</div><div class="d">Menschen arbeiten bei dir</div></div>
+    <div class="tile"><div class="l">Löhne bezahlt</div><div class="v">${eur(rs.wages)}</div><div class="d">an private Haushalte</div></div>
+    <div class="tile"><div class="l">${T('kommunal','Kommunalsteuer')}</div><div class="v">${eur(rs.komm)}</div><div class="d">an deine Gemeinde</div></div>
+    <div class="tile"><div class="l">${T('flaf','Familienbeihilfe & Co.')}</div><div class="v">${eur(rs.flaf)}</div><div class="d">Dienstgeberbeitrag</div></div>
+    <div class="tile"><div class="l">Sozialversicherung</div><div class="v">${eur(rs.sv)}</div><div class="d">Arbeitgeberanteil</div></div>
+    <div class="tile"><div class="l">${T('co2','CO₂-Ausstoß')}</div><div class="v">${num(rs.co2/1000)} t</div><div class="d">${num(rs.km)} km gefahren</div></div></div>
+    <p class="sub">Ein Unternehmen schafft Arbeitsplätze und Einkommen und finanziert über Steuern und Abgaben Gemeinde und Staat mit. Es verursacht aber auch Verkehr, Lärm und Abgase.</p></div>
+  <div class="panel"><h2>Wohin dein Geld fließt <small>${last?monthName(last.m):'nach dem ersten Monat'}</small></h2>${last?flowsHtml(last):'<p class="empty">Nach dem ersten Monat siehst du hier, welche Akteure Geld von dir bekommen.</p>'}
+    <p class="sub">${T('akteure','Akteure der Wirtschaft')} in der ${T('oeko','ökosozialen Marktwirtschaft')}: Haushalte, Unternehmen, Staat, Gemeinden, Sozialversicherung und Banken. Die Löhne verhandeln die ${T('sozialpartner','Sozialpartner')}, den Leitzins bestimmt die ${T('zentralbank','Zentralbank')}.</p></div>
+  <div class="panel"><h2>${T('innovation','Innovationen')} <small>Neues ausprobieren kostet Geld, kann sich aber lohnen</small></h2><div class="grid">${innov}</div></div>
+  <div class="panel"><h2>Standort wechseln <small>wenn sich Standortfaktoren ändern</small></h2><p class="sub">Ein Umzug kostet einmalig 6.000 €. Deine laufenden Verträge behältst du, aber die Wege zu den Kund:innen ändern sich.</p><div class="sites">${sitesHtml}</div></div>`;
+}
+
 /* ================= Diagramme ================= */
 function nice(max){const p=Math.pow(10,Math.floor(Math.log10(max||1))),m=max/p;return(m<=1?1:m<=2?2:m<=5?5:10)*p}
 function barChart(vals,labels){
@@ -651,6 +844,8 @@ function act(k,arg,el){
     case'depot':{if(!confirmTwice(el,'Wirklich umziehen?'))return;S.depotBig=true;addOne('Umzug in größeres Depot',3000,'other');toast('Ihr zieht in ein größeres Depot.');break}
     case'loan':{const a=+$('loanAmt').value;if(!a)return;S.loans.push({amt:a,left:a,rate:a/36});addOne('Kreditauszahlung',a,'loanIn');toast(`Kredit über ${eur(a)} aufgenommen.`);break}
     case'repay':{if(!confirmTwice(el,'Wirklich alles zurückzahlen?'))return;const d=S.loans.reduce((a,l)=>a+l.left,0);addOne('Sondertilgung Kredit',d,'tilg');S.loans=[];toast('Kredit zurückgezahlt.');break}
+    case'innov':{const v=INNOV[arg];if(!v||S.innov[arg])return;const cost=v.cost;addOne(`Innovation: ${v.name}`,cost,'other');if(v.grant)addOne(`Förderung: ${v.name}`,cost*v.grant,'subsidy');S.innov[arg]={start:S.m,done:false};toast(`Projekt gestartet: ${v.name}.`);break}
+    case'move':{const x=SITES[arg];if(!x)return;if(!confirmTwice(el,`Wirklich nach ${x.name}?`))return;S.site=arg;addOne(`Umzug nach ${x.name}`,6000,'other');S.contracts.forEach(c=>{if(c.seg==='stadt'&&c.place)c.ek=Math.round(2*distKm(x.place,c.place)*1.3)});S.offers=S.offers.map(o=>genOffer(o.seg));toast(`Dein Depot ist jetzt in ${x.name}.`);break}
     case'saveAnswers':{document.querySelectorAll('[data-answer]').forEach(t=>{const v=t.value.trim();if(v)S.tasks[t.dataset.answer].a=v});toast('Antworten gespeichert.');break}
   }
   save();render();
@@ -661,7 +856,84 @@ function confirmTwice(el,msg){if(el.dataset.arm&&Date.now()-el.dataset.arm<3500)
 function openSheet(html,narrow){$('sheet').className='sheet'+(narrow?' narrow':'');$('sheet').innerHTML=html;$('ov').hidden=false;$('sheet').scrollTop=0}
 function closeSheet(){$('ov').hidden=true;$('sheet').innerHTML='';if(!S)startSheet()}
 $('ov').addEventListener('click',e=>{if(e.target.id==='ov'&&!$('sheet').dataset.lock)closeSheet()});
+const COSTLBL={wage:'Löhne',sonder:'13./14. Gehalt',lnk:'Lohnnebenkosten',ot:'Überstunden',fuel:'Treibstoff und Strom',maut:'Maut',spesen:'Spesen',lease:'Leasing',ins:'Versicherung',maint:'Wartung',repair:'Reparaturen',afa:'Abschreibung',rent:'Miete',admin:'Büro und Verwaltung',marketing:'Werbung',interest:'Zinsen',penalty:'Vertragsstrafen',other:'Sonstiges',loss:'Verluste'};
+let repArgs=null;
+function anaHtml(r){
+  if(!r.vd)return'<p class="empty">Für diesen Monat gibt es noch keine Detaildaten. Die ausführliche Analyse gibt es für alle Monate, die ab jetzt abgeschlossen werden.</p>';
+  const idx=S.history.indexOf(r),prev=idx>0?S.history[idx-1]:null,U=f=>f.unit==='Pakete'?'Pakete':'Einsatztage';
+  const n1=x=>num(Math.round(x));
+  // Baustellen
+  const B=[];
+  const pen=r.fulfill.reduce((a,f)=>a+f.pen,0),miss=r.fulfill.reduce((a,f)=>a+(f.need-f.done)*f.price,0);
+  if(pen>0)B.push([pen+miss,`Aufträge nicht vollständig erfüllt: ${eur(pen)} Vertragsstrafe und ${eur(miss)} entgangener Umsatz. Meist heißt das: Du hast mehr Aufträge angenommen, als deine Fahrzeuge schaffen. Die genauen Gründe stehen unten bei jedem Auftrag.`]);
+  const lostSpot=Math.max(0,r.spot.demand-r.spot.served);
+  if(lostSpot>0)B.push([lostSpot*r.spot.price,`Freier Markt: ${num(lostSpot)} Pakete wollten Kund:innen bei dir aufgeben, aber du hattest keine freie Kapazität. Entgangener Umsatz: ${eur(lostSpot*r.spot.price)}.`]);
+  const idleW=(r.idleDrv||[]).reduce((a,d)=>a+d.w*(1+LNK),0);
+  if(idleW>0)B.push([idleW,`${r.idleDrv.length} Fahrer:in${r.idleDrv.length>1?'nen':''} ohne Fahrzeug (${r.idleDrv.map(d=>esc(d.n)).join(', ')}). Lohn und Lohnnebenkosten von rund ${eur(idleW)} hast du trotzdem bezahlt.`]);
+  const nod=r.vd.filter(v=>!v.d);if(nod.length)B.push([nod.reduce((a,v)=>a+v.fix,0),`${nod.length} Fahrzeug${nod.length>1?'e':''} ohne passende Fahrer:in (${nod.map(v=>`${v.n}, braucht ${LIC[v.lic]}`).join('; ')}). Leasing, Versicherung und Wartung von ${eur(nod.reduce((a,v)=>a+v.fix,0))} liefen trotzdem.`]);
+  const low=r.vd.filter(v=>v.d&&v.days>0&&v.used/v.days<.5);
+  if(low.length)B.push([low.reduce((a,v)=>a+v.fix*(1-v.used/v.days),0),`Kaum genutzt: ${low.map(v=>`${v.n} (${pct(v.used/v.days)})`).join(', ')}. Ein Fahrzeug kostet auch dann Geld, wenn es steht. Nimm mehr Aufträge an oder gib es zurück.`]);
+  if(r.cost.repair>0)B.push([r.cost.repair,`Reparaturen nach Pannen: ${eur(r.cost.repair)}. Ältere Fahrzeuge haben öfter Pannen.`]);
+  if(r.cost.ot>0)B.push([r.cost.ot*.33,`Überstunden kosten 50 % Zuschlag: ${eur(r.cost.ot)} zusätzlich. Auf Dauer ist ein weiteres Fahrzeug oft günstiger.`]);
+  if(r.cost.interest>0&&r.cash0<0)B.push([r.cost.interest,`Dein Konto war im Minus. Dafür verlangt die Bank ${(r.odRate*100).toLocaleString("de-AT")} % Zinsen pro Jahr: ${eur(r.cost.interest)} in diesem Monat.`]);
+  if(r.fulfill.some(f=>f.noPay))B.push([r.fulfill.filter(f=>f.noPay).reduce((a,f)=>a+f.done*f.price,0),`Ein Kunde hat nicht bezahlt (Forderungsausfall). Achte im Expertenmodus auf die Bonität.`]);
+  B.sort((a,b)=>b[0]-a[0]);
+  const verdict=r.profit<0?`Du hast ${eur(-r.profit)} Verlust gemacht: Den Einnahmen von ${eur(r.revTotal)} standen Kosten von ${eur(r.costTotal)} gegenüber.`:`Du hast ${eur(r.profit)} Gewinn gemacht: Einnahmen ${eur(r.revTotal)}, Kosten ${eur(r.costTotal)}.`;
+  const big=Object.entries(r.cost).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${COSTLBL[k]} ${eur(v)}`).join(', ');
+  let h=`<div class="panel"><h2>Kurzfassung</h2><p>${verdict} Die größten Kostenblöcke: ${big}.</p>
+    ${B.length?`<p style="margin-top:8px"><b>Was nicht gut lief</b> <span class="sub">(nach Geldwert sortiert)</span></p>${B.map(x=>`<p>• ${x[1]}</p>`).join('')}`:'<p style="margin-top:8px"><b>Alles lief rund:</b> alle Aufträge erfüllt, keine Strafen, keine ungenutzten Fahrzeuge.</p>'}</div>`;
+  // Aufträge
+  if(r.fulfill.length){h+=`<div class="panel"><h2>Aufträge im Detail <small>in der Reihenfolge, in der sie abgearbeitet wurden</small></h2><p class="sub">Aufträge werden in der Reihenfolge abgearbeitet, in der du sie angenommen hast. Frühere Aufträge belegen die Fahrzeuge zuerst, danach kommt der freie Markt.</p>`;
+    for(const f of r.fulfill){const segN=SEG[f.seg].name,u=U(f),mis=f.need-f.done;
+      h+=`<div class="item" style="margin-top:8px"><div class="t">${f.ord}. ${esc(f.client)} <span class="chip">${segN}</span> ${mis>0?'<span class="chip bad">nicht vollständig</span>':'<span class="chip good">erfüllt</span>'}</div><div class="s">Bestellt ${n1(f.need)} ${u}, geliefert ${n1(f.done)} ${u}, Preis ${f.unit==='Pakete'?eurC(f.price):eur(f.price)} pro ${f.unit==='Pakete'?'Paket':'Einsatztag'}.</div>`;
+      if(mis>0){const why=[];
+        if(!f.fleet)why.push(`Du hast kein passendes Fahrzeug. Für ${segN} brauchst du: ${SEG[f.seg].veh.map(t=>VEH[t].name).join(' oder ')}.`);
+        else if(!f.np)why.push(`Du hast ${f.fleet} passende${f.fleet>1?'':'s'} Fahrzeug${f.fleet>1?'e':''}, aber niemand mit dem nötigen Führerschein war frei. Das Fahrzeug stand still.`);
+        else{why.push(`Deine passenden Fahrzeuge hätten diesen Monat zusammen ${n1(f.full)} ${u} geschafft.`);
+          if(f.full-f.reg>0.5)why.push(`Davon brauchten Aufträge, die vorher an der Reihe waren, schon ${n1(f.full-f.reg)} ${u}.`);
+          why.push(`Für diesen Auftrag blieben ${n1(f.reg)} ${u}${f.ot?` plus bis zu ${n1(f.otR)} ${u} durch Überstunden`:''}. Gebraucht wurden ${n1(f.need)}.`);
+          if(f.lost>0.5)why.push(`Durch Pannen, Werkstatt oder Krankenstand gingen bei diesen Fahrzeugen rund ${n1(f.lost)} ${u} verloren.`);
+          if(!f.ot)why.push(`Überstunden waren ausgeschaltet. Damit wären bis zu ${n1(f.otIf)} ${u} mehr möglich gewesen (mit 50 % Lohnzuschlag).`);
+          const vt=SEG[f.seg].veh,have=vt.filter(x=>r.vd.some(v=>v.n===VEH[x].name)&&x!=='rad'),t=VEH[have[0]||vt.find(x=>x!=='rad')||vt[0]],perV=f.unit==='Pakete'?t.capP*r.W:r.W;
+          why.push(`Zum Vergleich: Ein zusätzlicher ${t.name} mit Fahrer:in schafft rund ${n1(perV)} ${u} im Monat.`)}
+        h+=`<p style="margin-top:6px"><b>Warum?</b></p>${why.map(x=>`<p>• ${x}</p>`).join('')}
+          <p style="margin-top:6px"><b>Wie die Strafe entstand:</b> Es fehlten ${n1(mis)} ${u}. Laut Vertrag zahlst du 30 % vom Wert der fehlenden Leistung: ${n1(mis)} × ${f.unit==='Pakete'?eurC(f.price):eur(f.price)} × 30 % = <b>${eur(f.pen)}</b>. Für die fehlende Leistung bekommst du außerdem nichts bezahlt (${eur(mis*f.price)} weniger Umsatz). Und dein Ruf sinkt.</p>`}
+      if(f.noPay)h+=`<p class="neg">Der Kunde hat diesen Monat nicht bezahlt.</p>`;
+      h+='</div>'}
+    h+='</div>'}
+  // Fahrzeuge
+  h+=`<div class="panel"><h2>Fahrzeuge und Personal</h2><div class="tablewrap"><table class="fin"><tr class="grp"><td>Fahrzeug</td><td style="text-align:left">Fahrer:in</td><td>Einsatzbereit</td><td>Genutzt</td></tr>
+    ${r.vd.map(v=>`<tr><td>${v.n}</td><td style="text-align:left">${v.d?esc(v.d):'<span class="neg">niemand</span>'}</td><td class="n">${v.days} von ${v.W} Tagen</td><td class="n">${v.days?pct(v.used/v.days):'–'}${v.ot?` + ${num(v.ot)} Ü-Tage`:''}</td></tr>`).join('')}</table></div>`;
+  const lostL=r.vd.filter(v=>v.d&&v.days<v.W).map(v=>{const p=[];if(v.brk)p.push(`${v.brk} Tag${v.brk>1?'e':''} Panne`);if(v.down)p.push(`${v.down} Tage Werkstatt nach Unfall`);if(v.sick)p.push(`${v.sick} Tage Krankenstand von ${esc(v.d)}`);return p.length?`${v.n}: ${p.join(', ')}.`:''}).filter(Boolean);
+  if(lostL.length)h+=`<p style="margin-top:6px"><b>Ausfälle</b></p>${lostL.map(x=>`<p>• ${x}</p>`).join('')}`;
+  if((r.idleDrv||[]).length)h+=`<p>• Ohne Fahrzeug: ${r.idleDrv.map(d=>`${esc(d.n)} (${LIC[d.lic]==='ohne'?'kein Führerschein':'Führerschein '+LIC[d.lic]})`).join(', ')}.</p>`;
+  h+=`<p class="sub">Die Fahrer:innen werden automatisch eingeteilt: zuerst die großen Fahrzeuge, jeweils mit der Person mit dem niedrigsten noch passenden Führerschein.</p></div>`;
+  // Freier Markt
+  const sp=r.spot;h+=`<div class="panel"><h2>Freier Markt</h2><p>Bei ${eurC(sp.price)} pro Paket wollten ${num(sp.demand)} Pakete verschickt werden. Nach deinen Aufträgen hatten deine Stadt-Fahrzeuge noch Platz für ${num(sp.cap)} Pakete. Zugestellt: <b>${num(sp.served)}</b>.</p>
+    <p>${sp.demand>sp.cap?`Die Nachfrage war größer als deine freie Kapazität. Mehr Fahrzeuge oder ein höherer Preis würden sich lohnen.`:sp.cap-sp.served>300?`${num(sp.cap-sp.served)} Pakete Platz blieben ungenutzt. Ein etwas niedrigerer Preis, Werbung oder ein besserer Ruf bringen mehr Nachfrage.`:'Nachfrage und Kapazität passten gut zusammen.'}</p></div>`;
+  // Ruf
+  if(r.rufParts)h+=`<div class="panel"><h2>Ruf ${r.ruf0} → ${r.ruf}</h2><table class="fin">${r.rufParts.map(([l,v])=>`<tr><td>${l}</td><td class="n ${v<0?'neg':'pos'}">${v>0?'+':v<0?'−':''}${num(Math.abs(Math.round(v*10)/10))}</td></tr>`).join('')}</table><p class="sub">Ereignisse während des Monats (z. B. Bewertungen, Werbekampagne) wirken sofort und sind hier nicht eingerechnet.</p></div>`;
+  // Kosten vs Vormonat
+  if(prev){const why={sonder:'Im Juni und November wird das 13. bzw. 14. Gehalt ausbezahlt.',penalty:'Siehe „Aufträge im Detail“.',repair:'Pannen und Unfälle.',ot:'Mehr Überstunden.',interest:'Höheres Minus am Konto oder ein neuer Kredit.',wage:'Mehr Personal oder Lohnerhöhung (Kollektivvertrag im Jänner).',fuel:'Mehr Kilometer, ein anderer Treibstoffpreis oder mehr Arbeitstage.',lease:'Mehr Fahrzeuge geleast.',other:'Einmalige Ausgaben (siehe unten).',marketing:'Höheres Werbebudget.',rent:'Größeres Depot, Umzug oder Mieterhöhung.',maut:'Mehr Lkw-Kilometer auf Autobahnen.'};
+    const D=Object.keys(r.cost).map(k=>[k,r.cost[k]-(prev.cost[k]||0)]).filter(x=>Math.abs(x[1])>=100).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,6);
+    if(D.length)h+=`<div class="panel"><h2>Kosten im Vergleich zu ${monthName(prev.m)}</h2><table class="fin">${D.map(([k,d])=>`<tr><td>${COSTLBL[k]}${d>0&&why[k]?`<br><span class="sub">${why[k]}</span>`:''}</td><td class="n ${d>0?'neg':'pos'}">${d>0?'+':'−'}${eur(Math.abs(d))}</td></tr>`).join('')}</table></div>`}
+  const oo=(r.oneoffs||[]).filter(o=>o[2]!=='subsidy'&&o[2]!=='loanIn');
+  if(oo.length)h+=`<div class="panel"><h2>Einmalige Ausgaben</h2><table class="fin">${oo.map(o=>`<tr><td>${esc(o[0])}</td><td class="n">${eur(o[1])}</td></tr>`).join('')}</table></div>`;
+  // Konto
+  if(r.cash<0)h+=`<div class="panel"><h2>Konto</h2><p>Dein Konto steht bei ${eur(r.cash)}. Der Überziehungsrahmen der Bank liegt bei −${num(OD_LIMIT)} €. ${r.cash<-OD_LIMIT?`<b class="neg">Du bist darunter. Das ist die ${Math.min(3,(r.insolv0||0)+1)}. Mahnung von 3.</b> Nach drei Monaten in Folge ist das Unternehmen zahlungsunfähig.`:'Du bist noch innerhalb des Rahmens, zahlst aber Zinsen.'}</p></div>`;
+  return h;
+}
+function anaSheet(m,fromReport){
+  const list=S.history.filter(x=>x.vd),r=S.history.find(x=>x.m===m)||S.history[S.history.length-1];if(!r)return;
+  const i=S.history.indexOf(r),pv=S.history[i-1],nx=S.history[i+1];
+  openSheet(`${fromReport?'':'<button class="small x" data-close type="button">Schließen</button>'}<span class="chip info" style="align-self:flex-start">Ausführliche Analyse</span><h2>${monthName(r.m)}: was lief gut, was nicht, und warum</h2>
+   ${fromReport?'':`<div class="actions">${pv?`<button class="small" data-act2="ana" data-m="${pv.m}" type="button">← ${monthName(pv.m)}</button>`:''}${nx?`<button class="small" data-act2="ana" data-m="${nx.m}" type="button">${monthName(nx.m)} →</button>`:''}</div>`}
+   ${anaHtml(r)}
+   <div class="actions">${fromReport?'<button class="primary" data-act2="backrep" type="button">Zurück zum Monatsbericht</button>':'<button class="small" data-close type="button">Schließen</button>'}</div>`);
+  $('sheet').scrollTop=0;
+}
 function showReport(r,yearEnd,bust){
+  repArgs=[r,yearEnd,bust];
   const fl=r.fulfill.map(f=>`<tr><td>${esc(f.client)}<br><span class="sub">${SEG[f.seg].name}</span></td><td class="n">${num(f.done)} / ${num(f.need)} ${f.unit}</td><td class="n ${f.done<f.need?'neg':''}">${f.done<f.need?'−'+eur(f.pen)+' Strafe':pct(1)}</td></tr>`).join('');
   $('sheet').dataset.lock='1';
   openSheet(`<span class="chip gold" style="align-self:flex-start">Monatsbericht</span><h2>${monthName(r.m)}</h2>
@@ -669,12 +941,14 @@ function showReport(r,yearEnd,bust){
     <div class="tile"><div class="l">${T('umsatz','Umsatz')}</div><div class="v">${eur(r.revTotal)}</div></div>
     <div class="tile"><div class="l">Kontostand</div><div class="v ${r.cash<0?'neg':''}">${eur(r.cash)}</div><div class="d">vorher ${eur(r.cash0)}</div></div>
     <div class="tile"><div class="l">${T('ausl','Auslastung')}</div><div class="v">${pct(r.util)}</div><div class="d">Ruf ${r.ruf0} → ${r.ruf}</div></div></div>
+   <div class="actions"><button class="small" data-act2="anarep" type="button">Ausführliche Analyse: was lief schief und warum?</button></div>
    ${r.notes.length?`<div class="panel"><h2>Was passiert ist</h2>${r.notes.map(n=>`<p>• ${esc(n)}</p>`).join('')}</div>`:''}
    ${fl?`<div class="panel"><h2>Aufträge</h2><div class="tablewrap"><table class="fin">${fl}<tr><td>Freier Markt</td><td class="n">${num(r.spot.served)} Pakete</td><td class="n">${eur(r.rev.spot)}</td></tr></table></div></div>`:''}
    <div class="panel"><h2>${adv()?T('guv','Erfolgsrechnung'):'Einnahmen und Ausgaben'}</h2><div class="tablewrap">${finRows(r)}</div>
     ${adv()&&(r.purchases||r.loanIn||r.tilg||r.sales||r.cost.afa)?`<p class="sub">Unterschied zum Konto: Fahrzeugkäufe ${eur(r.purchases)}, Verkäufe ${eur(r.sales)}, Kreditauszahlung ${eur(r.loanIn)}, Tilgung ${eur(r.tilg)}. Die ${T('afa','Abschreibung')} von ${eur(r.cost.afa)} kostet kein Geld vom Konto.</p>`:''}</div>
+   ${um()?`<div class="panel"><h2>Wohin dein Geld geflossen ist <small>${T('akteure','Akteure der Wirtschaft')}</small></h2>${flowsHtml(r)}</div>`:''}
    ${yearEnd?`<div class="event"><div class="k">Jahresabschluss ${2027+Math.floor(r.m/12)}</div><div class="t">Jahresergebnis: ${eur(r.yearProfit)}</div><p>${r.tax?`Darauf zahlst du 23 % ${T('koest','Körperschaftsteuer')}: <b>${eur(r.tax)}</b>.`:`Kein Gewinn, daher keine ${T('koest','Körperschaftsteuer')}.`}</p></div>`:''}
-   <div class="task"><b>Arbeitsauftrag</b><p>${esc(r.task)}</p><textarea id="taskA" placeholder="Deine Antwort (du kannst sie auch später in der Übersicht eintragen)"></textarea></div>
+   <div class="task"><b>${r.lp?`<span class="lp">Lehrplan ${r.lp}</span>`:''}Arbeitsauftrag</b><p>${esc(r.task)}</p><textarea id="taskA" placeholder="Deine Antwort (du kannst sie auch später in der Übersicht eintragen)">${esc((S.tasks[r.m]&&S.tasks[r.m].a)||'')}</textarea></div>
    ${bust?`<div class="warnbox">Dein Unternehmen ist zahlungsunfähig. Das Planspiel ist beendet. Exportiere deinen Abschlussbericht.</div>`:''}
    <div class="actions">${bust||yearEnd?`<button class="primary" data-act2="final" type="button">Abschlussbericht ansehen</button>`:''}${bust?'':`<button class="${yearEnd?'':'primary'}" data-act2="next" type="button">Weiter zu ${monthName(r.m+1)}</button>`}</div>`);
 }
@@ -682,13 +956,13 @@ function takeAnswer(){const t=$('taskA');if(t&&t.value.trim()&&lastReport){S.tas
 function reportText(){
   const h=S.history,b=balance(),tot=sumReports(h);
   const L=[];L.push('PAKETDIENST-PLANSPIEL · ABSCHLUSSBERICHT','');
-  L.push(`Name: ${S.name}`,`Klasse: ${S.klasse||'-'}`,`Firma: ${S.firma}`,`Stufe: ${adv()?'Fortgeschritten':'Einsteiger'}`,`Gespielte Monate: ${h.length}${S.ended==='insolvent'?' (Insolvenz)':''}`,`Erstellt: ${new Date().toLocaleString('de-AT')}`,'');
+  L.push(`Name: ${S.name}`,`Klasse: ${S.klasse||'-'}`,`Firma: ${S.firma}`,`Stufe: ${LVLNAME[S.lvl]||S.lvl}`,`Gespielte Monate: ${h.length}${S.ended==='insolvent'?' (Insolvenz)':''}`,`Erstellt: ${new Date().toLocaleString('de-AT')}`,'');
   L.push('ERGEBNIS',`Kontostand: ${eur(S.cash)} (Start ${eur(START_CAPITAL)})`,`Umsatz gesamt: ${eur(tot.revTotal)}`,`Kosten gesamt: ${eur(tot.costTotal)}`,`Ergebnis gesamt vor Steuern: ${eur(tot.profit)}`,`Bezahlte Körperschaftsteuer: ${eur(h.reduce((a,x)=>a+(x.tax||0),0))}`,`Ruf: ${S.ruf} / 100`,`Fuhrpark: ${S.veh.length} Fahrzeuge · Team: ${S.drv.length} Fahrer:innen`);
   if(adv())L.push(`Eigenkapital: ${eur(b.ek)} · Fremdkapital: ${eur(b.loans+b.od)}`,`Umsatzrendite gesamt: ${tot.revTotal?pct(tot.profit/tot.revTotal):'-'}`);
   L.push('','MONATE','Monat | Umsatz | Kosten | Ergebnis | Konto | Auslastung');
   h.forEach(r=>L.push(`${monthName(r.m)} | ${eur(r.revTotal)} | ${eur(r.costTotal)} | ${eur(r.profit)} | ${eur(r.cash)} | ${pct(r.util)}`));
   L.push('','ARBEITSAUFTRÄGE');
-  Object.entries(S.tasks).forEach(([k,t])=>{L.push('',`${monthName(+k)}: ${t.q}`,`Antwort: ${t.a||'(keine Antwort)'}`)});
+  Object.entries(S.tasks).forEach(([k,t])=>{L.push('',`${monthName(+k)}${t.lp?' [Lehrplan '+t.lp+']':''}: ${t.q}`,`Antwort: ${t.a||'(keine Antwort)'}`)});
   return L.join('\n');
 }
 function finalSheet(){
@@ -713,7 +987,17 @@ function termSheet(k){const t=TERMS[k];openSheet(`<button class="small x" data-c
 function teacherSheet(){
   openSheet(`<button class="small x" data-close type="button">Schließen</button><span class="chip info" style="align-self:flex-start">Für Lehrkräfte</span><h2>Hinweise zum Planspiel</h2>
   <p><b>Idee:</b> Die Schülerinnen und Schüler führen einen kleinen Paketdienst in Wien ein Geschäftsjahr lang. Jede Runde ist ein Monat: Sie nehmen Aufträge an, setzen einen Preis, leasen oder kaufen Fahrzeuge, stellen Personal ein und schließen den Monat ab. Danach lesen sie den Monatsbericht und beantworten einen Arbeitsauftrag.</p>
-  <p><b>Stufen:</b> <i>Einsteiger</i> (Unterstufe): Einnahmen, Ausgaben, Gewinn, Löhne, Leasing, Überziehung. <i>Fortgeschritten</i> (Oberstufe, HAK, HAS): zusätzlich Kauf mit Abschreibung, Kredit, Erfolgsrechnung, Bilanz, Deckungsbeitrag, Break-even, Bonität, Fernverkehr mit Maut, Kennzahlen.</p>
+  <p><b>Modi:</b> <i>Unterstufe</i>: ausgerichtet auf den Kompetenzbereich „Entwicklungen am Wirtschaftsstandort Österreich“ (siehe unten). <i>Oberstufe</i>: Einnahmen, Ausgaben, Gewinn, Löhne, Lohnnebenkosten, 13./14. Gehalt, Leasing, Überziehung und Liquidität. <i>Expertenmodus</i> (z. B. HAK, HAS): zusätzlich Kauf mit Abschreibung, Kredit, Erfolgsrechnung, Bilanz, Deckungsbeitrag, Break-even, Bonität, Fernverkehr mit Maut, Kennzahlen.</p>
+  <div class="tablewrap"><table class="fin"><tr class="grp"><td>Lehrplan (Unterstufe)</td><td style="text-align:left">Im Spiel</td></tr>
+  <tr><td>3.5 Standortfaktoren und Standortentscheidungen</td><td style="text-align:left;white-space:normal">Standortwahl zu Beginn mit harten und weichen Faktoren, späterer Umzug, Ansiedlungsförderung</td></tr>
+  <tr><td>3.6 Wirtschaftsregionen charakterisieren und verorten</td><td style="text-align:left;white-space:normal">Österreich-Karte, Kund:innen aus Industrie-, Tourismus-, Agrar- und Stadtregionen, saisonale Schwankungen</td></tr>
+  <tr><td>3.7 Folgen einer Ansiedelung</td><td style="text-align:left;white-space:normal">Arbeitsplätze, Kommunalsteuer, CO₂, Ereignisse: Anrainer:innen, Lehrstelle, Buslinie, Fachkräftemangel</td></tr>
+  <tr><td>3.8 Preisbildung, Angebot und Nachfrage</td><td style="text-align:left;white-space:normal">Preisvergleich mit Mitbewerbern, Nachfragekurve, Kosten pro Paket</td></tr>
+  <tr><td>3.9 Akteure der ökosozialen Marktwirtschaft</td><td style="text-align:left;white-space:normal">Geldflüsse zu Haushalten, Unternehmen, Staat, Gemeinde, Sozialversicherung, Bank; Leitzins (EZB/OeNB); KV-Verhandlung der Sozialpartner</td></tr>
+  <tr><td>3.10 Steuern und Abgaben</td><td style="text-align:left;white-space:normal">Kommunalsteuer, Familienlastenausgleichsfonds, Sozialversicherung, Mineralölsteuer und CO₂-Preis, Körperschaftsteuer</td></tr>
+  <tr><td>3.11 Bedeutung von Unternehmen für den Standort</td><td style="text-align:left;white-space:normal">„Dein Beitrag für die Region“, Arbeitsaufträge zu Rahmenbedingungen</td></tr>
+  <tr><td>3.12 Unternehmerische Innovation</td><td style="text-align:left;white-space:normal">Innovationsprojekte mit Kosten, Nutzen und Risiko (Routen-App, Paketstationen, Photovoltaik, Lastenrad-Hub, Drohnen)</td></tr></table></div>
+  <p class="sub">Die Arbeitsaufträge im Unterstufen-Modus sind mit dem jeweiligen Lehrplanpunkt gekennzeichnet und erscheinen so auch im Abschlussbericht.</p>
   <p><b>Zeitbedarf:</b> etwa 3 bis 5 Minuten pro Monat, ein Geschäftsjahr in rund zwei Unterrichtseinheiten. Das Spiel lässt sich jederzeit unterbrechen.</p>
   <p><b>Lernziele:</b> Fixkosten und variable Kosten unterscheiden · Preis und Nachfrage verstehen · Gewinn und Liquidität unterscheiden · Lohnnebenkosten und 13./14. Gehalt kennen · Kaufen, Leasen und Kredit vergleichen · Risiko und Auslastung bewerten.</p>
   <p><b>Ergebnisse einsammeln:</b> Unter „Speichern“ bzw. im Abschlussbericht kopieren die Schüler:innen einen Bericht mit allen Monatszahlen und ihren Antworten auf die Arbeitsaufträge und geben ihn ab, zum Beispiel über Teams oder Moodle.</p>
@@ -749,31 +1033,50 @@ function startSheet(pre){
    <label class="f" for="stName">Dein Name<input type="text" id="stName" autocomplete="name" maxlength="40" value="${esc(pre.name||'')}"></label>
    <label class="f" for="stKl">Klasse<input type="text" id="stKl" maxlength="12" placeholder="z. B. 3B" value="${esc(pre.klasse||'')}"></label>
    <label class="f" for="stFirma">Name deiner Firma<input type="text" id="stFirma" maxlength="40" placeholder="z. B. Blitzpaket GmbH" value="${esc(pre.firma||'')}"></label>
-   <div class="lvl"><label><input type="radio" name="lvl" value="basic" ${pre.lvl!=='adv'?'checked':''}><div><b>Einsteiger</b><span>Unterstufe: Einnahmen, Ausgaben, Gewinn, Löhne, Leasing.</span></div></label>
-   <label><input type="radio" name="lvl" value="adv" ${pre.lvl==='adv'?'checked':''}><div><b>Fortgeschritten</b><span>Oberstufe, HAK, HAS: Kauf und Abschreibung, Kredit, Erfolgsrechnung, Bilanz, Kennzahlen.</span></div></label></div>
+   <div class="lvl" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"><label><input type="radio" name="lvl" value="unter" ${!pre.lvl||pre.lvl==='unter'?'checked':''}><div><b>Unterstufe</b><span>Wirtschaftsstandort Österreich: Standortwahl, Regionen, Preise, Akteure, Steuern, Innovation.</span></div></label>
+   <label><input type="radio" name="lvl" value="basic" ${pre.lvl==='basic'?'checked':''}><div><b>Oberstufe</b><span>Einnahmen, Ausgaben, Gewinn, Löhne, Lohnnebenkosten, Leasing, Liquidität.</span></div></label>
+   <label><input type="radio" name="lvl" value="adv" ${pre.lvl==='adv'?'checked':''}><div><b>Expertenmodus</b><span>Kauf und Abschreibung, Kredit, Erfolgsrechnung, Bilanz, Kennzahlen, Fernverkehr.</span></div></label></div>
    <p class="sub" id="stMsg"></p>
    <div class="actions"><button class="primary" id="stGo" type="button">Planspiel starten</button><button class="small" data-act2="loadFromStart" type="button">Spielstand laden</button><button class="small" data-open="teacher" type="button">Für Lehrkräfte</button></div>`);
   $('stGo').onclick=()=>{const n=$('stName').value.trim(),f=$('stFirma').value.trim()||'Mein Paketdienst GmbH';if(!n){$('stMsg').textContent='Bitte gib deinen Namen ein.';$('stName').focus();return}
-    newGame({name:n,klasse:$('stKl').value.trim(),firma:f,lvl:document.querySelector('input[name=lvl]:checked').value});delete $('sheet').dataset.lock;closeSheet();tab='over';render()};
+    const o={name:n,klasse:$('stKl').value.trim(),firma:f,lvl:document.querySelector('input[name=lvl]:checked').value};
+    if(o.lvl==='unter'){siteSheet(o,pre.site);return}
+    newGame(o);delete $('sheet').dataset.lock;closeSheet();tab='over';render()};
+}
+function siteSheet(o,cur){
+  $('sheet').dataset.lock='1';
+  const SHORT={wien:['Wien',-8,-4,'end'],sued:['Wr. Neudorf',-8,8,'end']};const pins=Object.entries(SITES).map(([k,x])=>{const sh=SHORT[k];return{place:x.place,label:sh?sh[0]:x.name.split(' (')[0],depot:1,dx:sh?sh[1]:8,dy:sh?sh[2]:0,anchor:sh?sh[3]:'start'}});
+  openSheet(`<span class="chip gold" style="align-self:flex-start">Standortwahl</span><h2>Wo eröffnest du dein Depot?</h2>
+   <p>Jeder Standort hat andere ${T('standort','Standortfaktoren')}. Überlege, was dir wichtig ist: Kund:innen in der Nähe, günstige Miete, Verkehrsanbindung, genug Arbeitskräfte.</p>
+   ${austriaMap(pins)}
+   <div class="sites">${Object.entries(SITES).map(([k,x])=>`<button class="site" data-site="${k}" type="button" ${k===cur?'style="border-color:var(--accent)"':''}><span class="t">${x.name}</span><span class="chip">${x.label}</span><ul>${x.plus.map(y=>`<li>${y}</li>`).join('')}</ul><ul class="minus">${x.minus.map(y=>`<li>${y}</li>`).join('')}</ul><span class="sub">Miete ${eur(x.rent)} / Monat</span></button>`).join('')}</div>
+   <div class="actions"><button class="small" id="siteBack" type="button">Zurück</button></div>`);
+  $('siteBack').onclick=()=>startSheet(o);
+  $('sheet').querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>{newGame({...o,site:b.dataset.site});delete $('sheet').dataset.lock;closeSheet();tab='over';render()});
+}
+function _unusedStartTail(){
 }
 
 /* ================= Events ================= */
 document.addEventListener('click',e=>{
-  const el=e.target.closest('[data-tab],[data-term],[data-open],[data-choose],[data-accept],[data-lease],[data-buy],[data-ret],[data-sell],[data-hire],[data-fire],[data-train],[data-act],[data-act2],[data-close]');if(!el)return;const d=el.dataset;
+  const el=e.target.closest('[data-tab],[data-term],[data-open],[data-choose],[data-accept],[data-lease],[data-buy],[data-ret],[data-sell],[data-hire],[data-fire],[data-train],[data-innov],[data-move],[data-act],[data-act2],[data-close]');if(!el)return;const d=el.dataset;
   if(d.tab)return setTab(d.tab);
   if(d.term){e.preventDefault();return termSheet(d.term)}
   if(d.open==='lex')return lexSheet();if(d.open==='teacher')return teacherSheet();if(d.open==='save')return S?saveSheet():null;
   if(d.close!==undefined)return closeSheet();
   if(d.choose)return choose(d.choose);
-  for(const k of ['accept','lease','buy','ret','sell','hire','fire','train'])if(d[k]!=null)return act(k,d[k],el);
+  for(const k of ['accept','lease','buy','ret','sell','hire','fire','train','innov','move'])if(d[k]!=null)return act(k,d[k],el);
   if(d.act)return act(d.act,null,el);
+  if(d.act2==='anarep'){takeAnswer();return anaSheet(repArgs[0].m,true)}
+  if(d.act2==='backrep'){return showReport(...repArgs)}
+  if(d.act2==='ana'){return anaSheet(+d.m,false)}
   if(d.act2==='next'){takeAnswer();delete $('sheet').dataset.lock;closeSheet();tab='over';render();return}
   if(d.act2==='final'){takeAnswer();delete $('sheet').dataset.lock;return finalSheet()}
   if(d.act2==='lexall')return lexSheet(d.k);
   if(d.act2==='restart'){if(!confirmTwice(el,'Alles neu?'))return;restart();return}
   if(d.act2==='loadFromStart'){saveSheetLoadOnly();return}
 });
-function restart(){const pre=S?{name:S.name,klasse:S.klasse,firma:S.firma,lvl:S.lvl}:{};try{localStorage.removeItem(SAVE)}catch(_){}S=null;tab='over';$('view').innerHTML='';startSheet(pre)}
+function restart(){const pre=S?{name:S.name,klasse:S.klasse,firma:S.firma,lvl:S.lvl,site:S.site}:{};try{localStorage.removeItem(SAVE)}catch(_){}S=null;tab='over';$('view').innerHTML='';startSheet(pre)}
 $('restartBtn').onclick=e=>{if(!S)return;if(!confirmTwice(e.currentTarget,'Spielstand löschen?'))return;restart();toast('Neues Planspiel. Deine Angaben sind schon eingetragen.')};
 function saveSheetLoadOnly(){
   openSheet(`<span class="chip info" style="align-self:flex-start">Spielstand laden</span><h2>Mit Sicherungscode weiterspielen</h2><textarea id="codeIn" class="codebox" placeholder="Sicherungscode hier einfügen"></textarea><div class="actions"><button class="primary small" id="loadCode" type="button">Laden</button><button class="small" id="backStart" type="button">Zurück</button></div><p class="sub" id="ioMsg"></p>`,true);
@@ -783,8 +1086,8 @@ function saveSheetLoadOnly(){
 }
 document.addEventListener('input',e=>{
   if(!S)return;
-  if(e.target.id==='spotPrice'){S.spotPrice=+e.target.value;$('spotOut').textContent=eurC(S.spotPrice);const r=simulate(true);$('spotTiles').innerHTML=spotTiles(r);renderPreview();save()}
-  if(e.target.id==='mkt'){S.marketing=+e.target.value;$('mktOut').textContent=eur(S.marketing);const r=simulate(true);$('spotTiles').innerHTML=spotTiles(r);renderPreview();save()}
+  if(e.target.id==='spotPrice'){S.spotPrice=+e.target.value;$('spotOut').textContent=eurC(S.spotPrice);const r=simulate(true);$('spotTiles').innerHTML=spotTiles(r);if($('pcmp'))$('pcmp').outerHTML=priceCompare();renderPreview();save()}
+  if(e.target.id==='mkt'){S.marketing=+e.target.value;$('mktOut').textContent=eur(S.marketing);const r=simulate(true);$('spotTiles').innerHTML=spotTiles(r);if($('pcmp'))$('pcmp').outerHTML=priceCompare();renderPreview();save()}
 });
 document.addEventListener('change',e=>{if(S&&e.target.id==='ot'){S.overtime=e.target.checked;save();renderPreview()}});
 $('closeMonth').onclick=closeMonth;
